@@ -1,0 +1,18 @@
+service: hard
+
+provider:
+  name: aws
+  runtime: python3.12
+  stage: dev
+  region: eu-west-2
+
+functions:
+  hard:
+    handler: PUT.HANDLER.HERE
+
+resources:
+  Resources:
+    - Put other aws resources here
+    - API gateway
+    - DynamoDB tables
+    - Cognito User Pool
