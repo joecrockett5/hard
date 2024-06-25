@@ -5,6 +5,7 @@ provider:
   runtime: python3.12
   stage: dev
   region: eu-west-2
+  profile: serverless-user
 
 functions:
   hard:
@@ -12,7 +13,13 @@ functions:
 
 resources:
   Resources:
-    - Put other aws resources here
-    - API gateway
-    - DynamoDB tables
-    - Cognito User Pool
+    hardResourcesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: hardResources
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: "User_ObjectType"
+            KeyType: "HASH"
+          - AttributeName: "Timestamp"
+            KeyType: "RANGE"
