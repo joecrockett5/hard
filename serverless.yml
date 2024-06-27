@@ -32,9 +32,21 @@ provider:
             - "dynamodb:BatchWriteItem"
           Resource: !GetAtt hardResourcesTable.Arn
 
+
 functions:
-  hard:
+  hard-api:
     handler: PUT.HANDLER.HERE
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - http:
+          path: /{endpoints+}
+          method: ANY
+          authorizer: 
+            name: CognitoAuth
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt hardUserPool.Arn
+
 
 resources:
   Resources:
@@ -48,10 +60,20 @@ resources:
           - AttributeName: "User_ObjectType"
             AttributeType: S
           - AttributeName: "Timestamp"
-            KeyType: S
+            AttributeType: S
 
         KeySchema:
           - AttributeName: "User_ObjectType"
             KeyType: "HASH"
           - AttributeName: "Timestamp"
             KeyType: "RANGE"
+    
+
+    hardUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: hardUserPool
+        MfaConfiguration: OFF
+        UsernameAttributes:
+          - email
+        
