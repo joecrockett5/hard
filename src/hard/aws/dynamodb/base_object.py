@@ -2,7 +2,7 @@ from pydantic import BaseModel, field_validator, field_serializer
 from datetime import datetime
 from dateutil import parser as date_parser
 
-from hard.aws.object_type import ObjectType
+from hard.aws.dynamodb.object_type import ObjectType
 
 
 class BaseObject(BaseModel):
