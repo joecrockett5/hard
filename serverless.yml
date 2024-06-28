@@ -48,6 +48,21 @@ functions:
             arn: !GetAtt hardUserPool.Arn
 
 
+plugins:
+  - serverless-python-requirements
+
+
+custom:
+  pythonRequirements:
+    name: ${self.provider.stage}-hard-api
+    invalidateCaches: true
+    layer: true
+    slim: true
+    slimPatternsAppendDefaults: true
+    filename:
+      lambda-requirements.txt
+
+
 resources:
   Resources:
     hardResourcesTable:
