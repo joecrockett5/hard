@@ -1,11 +1,14 @@
+org: joecrockett
+app: hard
+
 service: hard
 
 provider:
   name: aws
-  runtime: python3.12
+  runtime: python3.11
   stage: dev
   region: eu-west-2
-  profile: serverless-user
+
 
   iam:
     role:
@@ -32,7 +35,6 @@ provider:
             - "dynamodb:BatchWriteItem"
           Resource: !GetAtt hardResourcesTable.Arn
 
-
 functions:
   hard-api:
     handler: PUT.HANDLER.HERE
@@ -47,6 +49,18 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt hardUserPool.Arn
 
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    name: ${self.provider.stage}-hard-api
+    invalidateCaches: true
+    layer: true
+    slim: true
+    slimPatternsAppendDefaults: true
+    filename:
+      lambda-requirements.txt
 
 resources:
   Resources:
