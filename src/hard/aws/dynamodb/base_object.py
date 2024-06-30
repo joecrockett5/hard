@@ -8,6 +8,8 @@ from hard.aws.dynamodb.object_type import ObjectType
 DB_PARTITION = "User_ObjectType"
 DELIMITER = "_"
 
+PARTITION_TEMPLATE = "{user_id}" + DELIMITER + "{object_type}"
+
 class BaseObject(BaseModel):
     """Base object for all items stored in DynamoDB"""
     user_id: str
@@ -57,5 +59,3 @@ class BaseObject(BaseModel):
         })
 
         return cls.model_validate(object)
-
-
