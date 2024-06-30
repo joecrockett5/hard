@@ -1,0 +1,93 @@
+org: joecrockett
+app: hard
+
+service: hard
+
+provider:
+  name: aws
+  runtime: python3.11
+  stage: dev
+  region: eu-west-2
+
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "logs:CreateLogStream"
+            - "logs:CreateLogGroup"
+          Resource: "arn:aws:logs:*:*:log-group:/aws/lambda/hard*:*"
+
+        - Effect: Allow
+          Action:
+            - "logs:PutLogEvents"
+          Resource: "arn:aws:logs:*:*:log-group:/aws/lambda/hard*:*:*"
+
+        - Effect: Allow
+          Action:
+            - "dynamodb:Query"
+            - "dynamodb:GetItem"
+            - "dynamodb:Scan"
+            - "dynamodb:PutItem"
+            - "dynamodb:UpdateItem"
+            - "dynamodb:DeleteItem"
+            - "dynamodb:BatchWriteItem"
+          Resource: !GetAtt hardResourcesTable.Arn
+
+functions:
+  hard-api:
+    handler: PUT.HANDLER.HERE
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - http:
+          path: /{endpoints+}
+          method: ANY
+          authorizer: 
+            name: CognitoAuth
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt hardUserPool.Arn
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    name: ${self.provider.stage}-hard-api
+    invalidateCaches: true
+    layer: true
+    slim: true
+    slimPatternsAppendDefaults: true
+    filename:
+      lambda-requirements.txt
+
+resources:
+  Resources:
+    hardResourcesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: hardResources
+        BillingMode: PAY_PER_REQUEST
+
+        AttributeDefinitions:
+          - AttributeName: "User_ObjectType"
+            AttributeType: S
+          - AttributeName: "Timestamp"
+            AttributeType: S
+
+        KeySchema:
+          - AttributeName: "User_ObjectType"
+            KeyType: "HASH"
+          - AttributeName: "Timestamp"
+            KeyType: "RANGE"
+    
+
+    hardUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: hardUserPool
+        MfaConfiguration: OFF
+        UsernameAttributes:
+          - email
+        
