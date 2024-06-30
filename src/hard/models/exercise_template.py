@@ -1,13 +1,8 @@
-from uuid import UUID
-from pydantic import BaseModel
 from typing import Optional
 
-from hard.models.tag import Tag
+from hard.aws.dynamodb.base_object import BaseObject
 
 
-class ExerciseTemplate(BaseModel):
-    id: UUID
-    user_id: str
-    tags: list[Tag]
+class Exercise(BaseObject):
     name: str
     image: Optional[str] = None
