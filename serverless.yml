@@ -35,9 +35,10 @@ provider:
             - "dynamodb:BatchWriteItem"
           Resource: !GetAtt hardResourcesTable.Arn
 
+
 functions:
   hard-api:
-    handler: PUT.HANDLER.HERE
+    handler: hard.app.main.handler
     layers:
       - Ref: PythonRequirementsLambdaLayer
     events:
@@ -49,8 +50,10 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt hardUserPool.Arn
 
+
 plugins:
   - serverless-python-requirements
+
 
 custom:
   pythonRequirements:
@@ -61,6 +64,7 @@ custom:
     slimPatternsAppendDefaults: true
     filename:
       lambda-requirements.txt
+
 
 resources:
   Resources:
