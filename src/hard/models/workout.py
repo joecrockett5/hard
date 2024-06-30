@@ -1,15 +1,8 @@
-from uuid import UUID
-from pydantic import BaseModel
 from datetime import date
 
-from hard.models.tag import Tag
-from hard.models.exercise import Exercise
+from hard.aws.dynamodb.base_object import BaseObject
 
-
-class Workout(BaseModel):
-    id: UUID
-    user_id: str
-    tags: list[Tag]
+class Workout(BaseObject):
+    id: str
     date: date
-    exercises: list[Exercise]
     notes: str

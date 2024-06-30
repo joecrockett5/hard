@@ -11,19 +11,19 @@ DELIMITER = "_"
 class BaseObject(BaseModel):
     """Base object for all items stored in DynamoDB"""
     user_id: str
-    created: datetime
+    timestamp: datetime
     object_type: ObjectType
     object_id: str
 
     # `created` handling
-    @field_validator("created", mode="before")
+    @field_validator("timestamp", mode="before")
     @classmethod
     def parse_iso_format(cls, iso_date: str) -> datetime:
         return date_parser.isoparse(iso_date)
     
-    @field_serializer("created")
-    def convert_to_iso(created: datetime):
-        return created.isoformat()
+    @field_serializer("timestamp")
+    def convert_to_iso(timestamp: datetime):
+        return timestamp.isoformat()
     
     # `object_type` handling
     @field_validator("object_type")
