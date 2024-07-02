@@ -38,7 +38,7 @@ provider:
 
 functions:
   hard-api:
-    handler: hard.app.main.handler
+    handler: src.hard.app.main.handler
     layers:
       - Ref: PythonRequirementsLambdaLayer
     events:
@@ -64,6 +64,10 @@ custom:
     slimPatternsAppendDefaults: true
     filename:
       lambda-requirements.txt
+    pipCmdExtraArgs:
+      - --find-links .wheels/
+      - --platform manylinux2014_x86_64
+      - '--only-binary=:all:'
 
 
 resources:
