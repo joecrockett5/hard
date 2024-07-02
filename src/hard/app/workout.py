@@ -8,7 +8,7 @@ from hard.aws.interfaces.fastapi import request
 
 router = APIRouter(prefix="/workouts")
 
-WORKOUT_PARTITION = PARTITION_TEMPLATE.format({"object_type": ObjectType.WORKOUT.value})
+# WORKOUT_PARTITION = PARTITION_TEMPLATE.format({"object_type": ObjectType.WORKOUT.value})
 
 
 @router.get("/", response_model=list[Workout])
@@ -17,10 +17,10 @@ def list_workouts(req: Request) -> list[Workout]:
     pass
 
 
-@router.get("/{workout_id}", response_model=Workout)
-def get_workout(req: Request, workout_id: str) -> Workout:
-    user = request.get_user_claims(req)
-    pass
+# @router.get("/{workout_id}", response_model=Workout)
+# def get_workout(req: Request, workout_id: str) -> Workout:
+#     user = request.get_user_claims(req)
+#     pass
 
 
 @router.post("/", response_model=Workout)
