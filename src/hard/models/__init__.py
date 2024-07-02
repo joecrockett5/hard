@@ -6,7 +6,6 @@ class WeightUnit(Enum):
     POUNDS = "lbs"
 
 
-from .exercise_template import ExerciseTemplate
 from .exercise import Exercise
 from .set import Set
 from .tag import Tag

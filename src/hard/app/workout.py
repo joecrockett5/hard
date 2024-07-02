@@ -39,3 +39,8 @@ def update_workout(req: Request, workout_id: str) -> Workout:
 def delete_workout(req: Request, workout_id: str) -> Workout:
     user = request.get_user_claims(req)
     pass
+
+
+@router.get("/test")
+def test_endpoint():
+    return {"message": "test-endpoint"}

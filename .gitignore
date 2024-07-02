@@ -3,3 +3,4 @@
 .serverless
 
 *.egg-info
+__pycache__
