@@ -1,5 +1,11 @@
 from starlette.requests import Request
 
+from hard.aws.models.user import User
+
+
+class AuthorizationError(Exception):
+    pass
+
 
 def get_aws_event(request: Request) -> dict:
     try:
@@ -8,6 +14,12 @@ def get_aws_event(request: Request) -> dict:
         raise KeyError("No AWS event in request")
 
 
-def get_user_claims(request: Request) -> dict:
+def get_user_claims(request: Request) -> User:
     event = get_aws_event(request)
-    return event.requestContext.authorizer.claims
+    try:
+        claims = event["requestContext"]["authorizer"]["claims"]
+        user_id = claims["cognito:username"]
+        email = claims["email"]
+    except KeyError:
+        raise AuthorizationError("Unable to get user claims")
+    return User(user_id, email)

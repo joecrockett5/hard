@@ -14,13 +14,13 @@ router = APIRouter(prefix="/workouts")
 @router.get("/", response_model=list[Workout])
 def list_workouts(req: Request) -> list[Workout]:
     user = request.get_user_claims(req)
+    return {"email": user.email}
+
+
+@router.get("/{workout_id}", response_model=Workout)
+def get_workout(req: Request, workout_id: str) -> Workout:
+    user = request.get_user_claims(req)
     pass
-
-
-# @router.get("/{workout_id}", response_model=Workout)
-# def get_workout(req: Request, workout_id: str) -> Workout:
-#     user = request.get_user_claims(req)
-#     pass
 
 
 @router.post("/", response_model=Workout)
@@ -39,8 +39,3 @@ def update_workout(req: Request, workout_id: str) -> Workout:
 def delete_workout(req: Request, workout_id: str) -> Workout:
     user = request.get_user_claims(req)
     pass
-
-
-@router.get("/test")
-def test_endpoint():
-    return {"message": "test-endpoint"}
