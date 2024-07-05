@@ -1,6 +1,3 @@
-org: joecrockett
-app: hard
-
 service: hard
 
 provider:
@@ -58,14 +55,18 @@ plugins:
 custom:
   pythonRequirements:
     name: ${self.provider.stage}-hard-api
-    invalidateCaches: true
     layer: true
     slim: true
     slimPatternsAppendDefaults: true
+    invalidateCaches: true
+    useDownloadCache: false
+    useStaticCache: false
     filename:
       lambda-requirements.txt
     pipCmdExtraArgs:
       - --find-links .wheels/
+      - --python-version 3.11
+      - --implementation cp
       - --platform manylinux2014_x86_64
       - '--only-binary=:all:'
 
