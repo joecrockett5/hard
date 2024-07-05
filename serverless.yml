@@ -60,6 +60,8 @@ custom:
     dockerizePip: non-linux
     name: ${self.provider.stage}-hard-api
     invalidateCaches: true
+    useDownloadCache: false
+    useStaticCache: false
     layer: true
     slim: true
     slimPatternsAppendDefaults: true
