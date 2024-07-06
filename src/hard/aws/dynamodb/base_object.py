@@ -1,7 +1,7 @@
-from pydantic import BaseModel, field_validator, field_serializer
-from pydantic_core import PydanticCustomError
 from datetime import datetime
+
 from dateutil import parser as date_parser
+from pydantic import BaseModel, field_serializer, field_validator
 
 from hard.aws.dynamodb.object_type import ObjectType
 
@@ -26,7 +26,7 @@ class BaseObject(BaseModel):
         return date_parser.isoparse(iso_date)
 
     @field_serializer("timestamp")
-    def convert_to_iso(timestamp: datetime):
+    def convert_to_iso(self, timestamp: datetime):
         return timestamp.isoformat()
 
     # `object_type` handling
@@ -36,7 +36,7 @@ class BaseObject(BaseModel):
         return ObjectType(object_type)
 
     @field_serializer("object_type")
-    def get_value(object_type: ObjectType):
+    def get_value(self, object_type: ObjectType):
         return object_type.value
 
     def to_db(self):
