@@ -3,6 +3,8 @@ import os
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
+from hard.aws.dynamodb.base_object import BaseObject
+
 
 class DynamoDB:
     def __init__(self, table_name: str) -> None:
@@ -24,6 +26,13 @@ class DynamoDB:
         else:
             response = self._table.query(KeyConditionExpression=key_expression)
         return response["Items"]
+
+    def put(self, /, data_object: BaseObject) -> BaseObject:
+        """
+        'Puts' the given `data_object` into the DynamoDB table
+        """
+        self._table.put_item(Item=data_object.to_db())
+        return data_object
 
 
 def get_db_instance() -> DynamoDB:
