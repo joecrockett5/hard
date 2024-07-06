@@ -17,7 +17,6 @@ def list_workouts(user: User) -> list[Workout]:
             )
         )
     )
-    print(f"{query=}")
     results = [Workout.from_db(item) for item in query]
     return results
 
