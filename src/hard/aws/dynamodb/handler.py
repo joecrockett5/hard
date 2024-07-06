@@ -1,5 +1,7 @@
+import os
+
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Attr, Key
 
 
 class DynamoDB:
@@ -10,8 +12,8 @@ class DynamoDB:
     def query(self, /, key_expression, filter_expression) -> list[dict[str]]:
         """
         Queries the DynamoDB table with the given expressions
-        
-        Use the `aws.dynamodb.Key` and `aws.dynamodb.Attr` objects 
+
+        Use the `aws.dynamodb.Key` and `aws.dynamodb.Attr` objects
         to express the state of the desired keys and attributes
         """
         response = self._table.query(
@@ -19,9 +21,14 @@ class DynamoDB:
             FilterExpression=filter_expression,
         )
         return response["Items"]
-    
+
     def get_item(self, /, key_state: dict[str, str]) -> dict[str]:
-        response = self._table.get_item(
-            Key=key_state
-        )
+        response = self._table.get_item(Key=key_state)
         return response["Item"]
+
+
+def get_db_instance() -> DynamoDB:
+    db_name = os.getenv("DYNAMO_TABLE_NAME")
+    if db_name:
+        return DynamoDB(table_name=db_name)
+    raise ValueError("Missing Environment Variable: `DYNAMO_TABLE_NAME`")
