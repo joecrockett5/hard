@@ -3,7 +3,7 @@ from datetime import datetime
 from dateutil import parser as date_parser
 from pydantic import BaseModel, field_serializer, field_validator
 
-from hard.aws.dynamodb.consts import DB_PARTITION, DELIMITER
+from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, DELIMITER
 from hard.aws.dynamodb.object_type import ObjectType
 
 
@@ -41,6 +41,7 @@ class BaseObject(BaseModel):
             f'{as_dict.pop("user_id")}{DELIMITER}{as_dict.pop("object_type")}'
         )
         as_dict[DB_PARTITION] = partition_key
+        as_dict[DB_SORT_KEY] = as_dict.pop("timestamp")
 
         return as_dict
 
@@ -58,5 +59,6 @@ class BaseObject(BaseModel):
             )
 
         object.update({"user_id": user_id, "object_type": object_type})
+        object.update({"timestamp": object.pop(DB_SORT_KEY)})
 
         return cls.model_validate(object)
