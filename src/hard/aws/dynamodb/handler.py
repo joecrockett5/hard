@@ -9,7 +9,7 @@ class DynamoDB:
         self._client = boto3.client("dynamodb")
         self._table = self._client.Table(table_name)
 
-    def query(self, /, key_expression, filter_expression) -> list[dict[str]]:
+    def query(self, /, key_expression, filter_expression=None) -> list[dict[str]]:
         """
         Queries the DynamoDB table with the given expressions
 
