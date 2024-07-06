@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 from starlette.requests import Request
 
-from hard.aws.dynamodb import ObjectType
+from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.interfaces.fastapi import request
-from hard.models import Workout
+from hard.models.workout import Workout
 
 router = APIRouter(prefix="/workouts")
 

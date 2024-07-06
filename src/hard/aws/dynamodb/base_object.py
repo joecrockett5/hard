@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TypeVar
 
 from dateutil import parser as date_parser
 from pydantic import BaseModel, field_serializer, field_validator
@@ -62,3 +63,6 @@ class BaseObject(BaseModel):
         object.update({"timestamp": object.pop(DB_SORT_KEY)})
 
         return cls.model_validate(object)
+
+
+DB_OBJECT_TYPE = TypeVar("DB_OBJECT_TYPE", bound=BaseObject)

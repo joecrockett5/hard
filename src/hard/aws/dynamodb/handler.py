@@ -4,8 +4,7 @@ from typing import TypeVar
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
-from hard.aws.dynamodb.base_object import BaseObject
-from hard.aws.dynamodb.consts import DB_OBJECT_TYPE
+from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE, BaseObject
 
 
 class DynamoDB:

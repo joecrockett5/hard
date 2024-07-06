@@ -9,14 +9,14 @@ from hard.aws.dynamodb.object_type import ObjectType
 
 class Workout(BaseObject):
     object_type: ObjectType = ObjectType.WORKOUT
-    date: date
+    workout_date: date
     notes: Optional[str] = None
 
-    @field_serializer("date")
-    def to_isoformat(self, date: date) -> str:
-        return date.to_isoformat()
+    @field_serializer("workout_date")
+    def to_isoformat(self, workout_date: date) -> str:
+        return workout_date.isoformat()
 
-    @field_validator("date")
+    @field_validator("workout_date", mode="before")
     @classmethod
     def from_isoformat(cls, date_str: str) -> date:
         return date.fromisoformat(date_str)
