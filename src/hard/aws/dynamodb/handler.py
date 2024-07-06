@@ -22,10 +22,6 @@ class DynamoDB:
         )
         return response["Items"]
 
-    def get_item(self, /, key_state: dict[str, str]) -> dict[str]:
-        response = self._table.get_item(Key=key_state)
-        return response["Item"]
-
 
 def get_db_instance() -> DynamoDB:
     db_name = os.getenv("DYNAMO_TABLE_NAME")
