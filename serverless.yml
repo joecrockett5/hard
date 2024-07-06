@@ -9,7 +9,6 @@ provider:
   stage: dev
   region: eu-west-2
 
-
   iam:
     role:
       statements:
@@ -35,7 +34,6 @@ provider:
             - "dynamodb:BatchWriteItem"
           Resource: !GetAtt hardResourcesTable.Arn
 
-
 functions:
   hard-api:
     handler: src.hard.app.main.handler
@@ -45,15 +43,15 @@ functions:
       - http:
           path: /{endpoints+}
           method: ANY
-          authorizer: 
+          authorizer:
             name: CognitoAuth
             type: COGNITO_USER_POOLS
             arn: !GetAtt hardUserPool.Arn
-
+    environment:
+      DYNAMO_TABLE_NAME: hardResourcesTable
 
 plugins:
   - serverless-python-requirements
-
 
 custom:
   pythonRequirements:
@@ -62,13 +60,11 @@ custom:
     useDownloadCache: false
     useStaticCache: false
     layer: true
-    fileName:
-      lambda-requirements.txt
+    fileName: lambda-requirements.txt
     pipCmdExtraArgs:
       - --find-links .wheels/
       - --platform manylinux2014_x86_64
-      - '--only-binary=:all:'
-
+      - "--only-binary=:all:"
 
 resources:
   Resources:
@@ -89,7 +85,6 @@ resources:
             KeyType: "HASH"
           - AttributeName: "Timestamp"
             KeyType: "RANGE"
-    
 
     hardUserPool:
       Type: AWS::Cognito::UserPool
@@ -98,4 +93,3 @@ resources:
         MfaConfiguration: OFF
         UsernameAttributes:
           - email
-        
