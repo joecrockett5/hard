@@ -3,12 +3,8 @@ from datetime import datetime
 from dateutil import parser as date_parser
 from pydantic import BaseModel, field_serializer, field_validator
 
+from hard.aws.dynamodb.consts import DB_PARTITION, DELIMITER
 from hard.aws.dynamodb.object_type import ObjectType
-
-DB_PARTITION = "User_ObjectType"
-DELIMITER = "_"
-
-PARTITION_TEMPLATE = "{user_id}" + DELIMITER + "{object_type}"
 
 
 class BaseObject(BaseModel):
