@@ -20,3 +20,10 @@ def list_workouts(user: User) -> list[Workout]:
     print(f"{query=}")
     results = [Workout.from_db(item) for item in query]
     return results
+
+
+def create_workout(workout: Workout) -> Workout:
+    db = get_db_instance()
+
+    result = db.put(data_object=workout)
+    return result

@@ -1,9 +1,11 @@
 import os
+from typing import TypeVar
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
 from hard.aws.dynamodb.base_object import BaseObject
+from hard.aws.dynamodb.consts import DB_OBJECT_TYPE
 
 
 class DynamoDB:
@@ -27,7 +29,7 @@ class DynamoDB:
             response = self._table.query(KeyConditionExpression=key_expression)
         return response["Items"]
 
-    def put(self, /, data_object: BaseObject) -> BaseObject:
+    def put(self, /, data_object: DB_OBJECT_TYPE) -> DB_OBJECT_TYPE:
         """
         'Puts' the given `data_object` into the DynamoDB table
         """
