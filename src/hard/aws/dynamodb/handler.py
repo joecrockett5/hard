@@ -5,6 +5,7 @@ import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
 from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE
+from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY
 
 
 class DynamoDB:
@@ -44,6 +45,19 @@ class DynamoDB:
         'Puts' the given `data_object` into the DynamoDB table
         """
         self._table.put_item(Item=data_object.to_db())
+        return data_object
+
+    def delete(self, /, data_object: DB_OBJECT_TYPE) -> DB_OBJECT_TYPE:
+        """
+        Deletes the given `data_object` from the DyanmoDB table
+        """
+        data = data_object.to_db()
+        self._table.delete_item(
+            Key={
+                DB_PARTITION: data.get(DB_PARTITION),
+                DB_SORT_KEY: data.get(DB_SORT_KEY),
+            }
+        )
         return data_object
 
 
