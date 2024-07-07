@@ -3,6 +3,7 @@ from hard.aws.dynamodb.consts import (
     ITEM_INDEX_NAME,
     ITEM_INDEX_PARTITION,
     PARTITION_TEMPLATE,
+    ItemNotFoundError,
 )
 from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
@@ -32,7 +33,10 @@ def get_workout(workout_id: str) -> Workout:
         secondary_index_name=ITEM_INDEX_NAME,
         key_expression=Key(ITEM_INDEX_PARTITION).eq(workout_id),
     )
-    item = query[0]
+    try:
+        item = query[0]
+    except IndexError:
+        raise ItemNotFoundError(f"No `Workout` found with `object_id`: '{workout_id}'")
     result = Workout.from_db(item)
     return result
 

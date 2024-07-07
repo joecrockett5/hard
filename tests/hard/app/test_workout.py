@@ -5,7 +5,12 @@ import moto
 import pytest
 
 from hard.app.workout import processes
-from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, DELIMITER
+from hard.aws.dynamodb.consts import (
+    DB_PARTITION,
+    DB_SORT_KEY,
+    DELIMITER,
+    ItemNotFoundError,
+)
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
 from hard.models.workout import Workout
@@ -157,23 +162,26 @@ class TestListWorkouts:
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
 @patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
 class TestGetWorkout:
+    EXAMPLE_WORKOUT_ID = "0123"
 
     def test_successful_fetch(self):
-        EXAMPLE_WORKOUT_ID = "0123"
         example_workout = Workout.model_validate(
             {
                 "user_id": MOCK_USER_ID,
                 "timestamp": "2024-07-06T00:00:00.000000",
-                "object_id": EXAMPLE_WORKOUT_ID,
+                "object_id": self.EXAMPLE_WORKOUT_ID,
                 "workout_date": "2024-07-06",
             }
         )
         processes.create_workout(example_workout)
 
-        result = processes.get_workout(workout_id=EXAMPLE_WORKOUT_ID)
+        result = processes.get_workout(workout_id=self.EXAMPLE_WORKOUT_ID)
         assert isinstance(result, Workout)
         assert result.__dict__ == example_workout.__dict__
 
-    @pytest.mark.skip
     def test_item_doesnt_exist(self):
-        pass
+        with pytest.raises(
+            ItemNotFoundError,
+            match=f"No `Workout` found with `object_id`: '{self.EXAMPLE_WORKOUT_ID}'",
+        ):
+            result = processes.get_workout(workout_id=self.EXAMPLE_WORKOUT_ID)
