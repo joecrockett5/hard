@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import boto3
 import moto
 import pytest
@@ -76,7 +78,7 @@ def set_up_aws_resources():
             GlobalSecondaryIndexes=[
                 {
                     "IndexName": GSI_NAME,
-                    "KeySchema": [{"AttributeName": "object_id", "KeyType": "RANGE"}],
+                    "KeySchema": [{"AttributeName": "object_id", "KeyType": "HASH"}],
                     "Projection": {"ProjectionType": "ALL"},
                 }
             ],
@@ -153,6 +155,7 @@ class TestListWorkouts:
 
 @pytest.mark.dependency(depends=["CREATE"])
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+@patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
 class TestGetWorkout:
 
     def test_successful_fetch(self):
@@ -171,5 +174,6 @@ class TestGetWorkout:
         assert isinstance(result, Workout)
         assert result.__dict__ == example_workout.__dict__
 
+    @pytest.mark.skip
     def test_item_doesnt_exist(self):
         pass
