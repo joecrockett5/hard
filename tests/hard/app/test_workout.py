@@ -1,3 +1,4 @@
+from typing import Any, Generator
 from unittest.mock import patch
 
 import boto3
@@ -158,30 +159,52 @@ class TestListWorkouts:
         assert len(results) == 0
 
 
-@pytest.mark.dependency(depends=["CREATE"])
+EXAMPLE_WORKOUT_ID = "0123"
+
+
+@pytest.mark.usefixtures("env_vars")
+@pytest.fixture
+def add_example_workout_to_db(set_up_aws_resources) -> Generator[Workout, Any, Any]:
+    example_workout = Workout.model_validate(
+        {
+            "user_id": MOCK_USER_ID,
+            "timestamp": "2024-07-06T00:00:00.000000",
+            "object_id": EXAMPLE_WORKOUT_ID,
+            "workout_date": "2024-07-06",
+        }
+    )
+    processes.create_workout(example_workout)
+    yield example_workout
+
+
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
 @patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
 class TestGetWorkout:
-    EXAMPLE_WORKOUT_ID = "0123"
 
-    def test_successful_fetch(self):
-        example_workout = Workout.model_validate(
-            {
-                "user_id": MOCK_USER_ID,
-                "timestamp": "2024-07-06T00:00:00.000000",
-                "object_id": self.EXAMPLE_WORKOUT_ID,
-                "workout_date": "2024-07-06",
-            }
-        )
-        processes.create_workout(example_workout)
+    @pytest.mark.dependency(depends=["CREATE"])
+    def test_successful_fetch(self, add_example_workout_to_db):
+        example_workout = add_example_workout_to_db
 
-        result = processes.get_workout(workout_id=self.EXAMPLE_WORKOUT_ID)
+        result = processes.get_workout(workout_id=EXAMPLE_WORKOUT_ID)
+
         assert isinstance(result, Workout)
         assert result.__dict__ == example_workout.__dict__
 
     def test_item_doesnt_exist(self):
         with pytest.raises(
             ItemNotFoundError,
-            match=f"No `Workout` found with `object_id`: '{self.EXAMPLE_WORKOUT_ID}'",
+            match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}'",
         ):
-            result = processes.get_workout(workout_id=self.EXAMPLE_WORKOUT_ID)
+            result = processes.get_workout(workout_id=EXAMPLE_WORKOUT_ID)
+
+
+@pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+@patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
+class TestUpdateWorkout:
+
+    @pytest.mark.dependency(depends=["CREATE"])
+    def test_successful_update(self):
+        pass
+
+    def test_item_doesnt_exist(self):
+        pass
