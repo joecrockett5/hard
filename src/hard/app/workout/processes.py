@@ -49,7 +49,17 @@ def create_workout(workout: Workout) -> Workout:
 
 
 def update_workout(updated_workout: Workout) -> Workout:
-    pass
+    db = get_db_instance()
+
+    try:
+        get_workout(updated_workout.object_id)
+    except ItemNotFoundError:
+        raise ItemNotFoundError(
+            f"No `Workout` found with `object_id`: '{updated_workout.object_id}': Cannot Update"
+        )
+
+    result = db.put(data_object=updated_workout)
+    return result
 
 
 def delete_workout(workout_id: str) -> Workout:

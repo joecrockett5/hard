@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any, Generator
 from unittest.mock import patch
 
@@ -162,10 +163,9 @@ class TestListWorkouts:
 EXAMPLE_WORKOUT_ID = "0123"
 
 
-@pytest.mark.usefixtures("env_vars")
 @pytest.fixture
-def add_example_workout_to_db(set_up_aws_resources) -> Generator[Workout, Any, Any]:
-    example_workout = Workout.model_validate(
+def example_workout() -> Workout:
+    return Workout.model_validate(
         {
             "user_id": MOCK_USER_ID,
             "timestamp": "2024-07-06T00:00:00.000000",
@@ -173,6 +173,13 @@ def add_example_workout_to_db(set_up_aws_resources) -> Generator[Workout, Any, A
             "workout_date": "2024-07-06",
         }
     )
+
+
+@pytest.fixture
+def add_example_workout_to_db(
+    set_up_aws_resources,
+    example_workout,
+) -> Generator[Workout, Any, Any]:
     processes.create_workout(example_workout)
     yield example_workout
 
@@ -203,8 +210,35 @@ class TestGetWorkout:
 class TestUpdateWorkout:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_update(self):
-        pass
+    def test_successful_update(self, add_example_workout_to_db):
+        example_workout = add_example_workout_to_db
 
-    def test_item_doesnt_exist(self):
-        pass
+        updated_workout = deepcopy(example_workout)
+        updated_workout.notes = "UPDATED"
+
+        result = processes.update_workout(updated_workout)
+
+        assert isinstance(result, Workout)
+
+        client = boto3.client("dynamodb")
+        table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+
+        assert len(table_data) == 1
+
+        workout_data = {
+            key: value.get("S", None) for key, value in table_data[0].items()
+        }
+        workout_from_db = Workout.from_db(workout_data)
+
+        assert workout_from_db.notes == "UPDATED"
+        assert workout_from_db.__dict__ == updated_workout.__dict__
+
+    def test_item_doesnt_exist(self, example_workout):
+        updated_workout = deepcopy(example_workout)
+        updated_workout.notes = "UPDATED"
+
+        with pytest.raises(
+            ItemNotFoundError,
+            match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}': Cannot Update",
+        ):
+            processes.update_workout(updated_workout)
