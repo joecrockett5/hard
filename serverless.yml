@@ -94,7 +94,7 @@ resources:
 
             KeySchema:
               - AttributeName: "object_id"
-              - KeyType: "RANGE"
+                KeyType: "HASH"
 
             Projection:
               ProjectionType: ALL
