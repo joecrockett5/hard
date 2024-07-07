@@ -49,6 +49,7 @@ functions:
             arn: !GetAtt hardUserPool.Arn
     environment:
       DYNAMO_TABLE_NAME: hardResourcesTable
+      DYNAMO_ITEM_INDEX_NAME: ItemSearch
 
 plugins:
   - serverless-python-requirements
