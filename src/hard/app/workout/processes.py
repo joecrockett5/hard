@@ -1,3 +1,4 @@
+from hard.app.workout.routes import delete_workout
 from hard.aws.dynamodb.consts import DB_PARTITION, PARTITION_TEMPLATE
 from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
@@ -21,8 +22,20 @@ def list_workouts(user: User) -> list[Workout]:
     return results
 
 
+def get_workout(workout_id: str) -> Workout:
+    pass
+
+
 def create_workout(workout: Workout) -> Workout:
     db = get_db_instance()
 
     result = db.put(data_object=workout)
     return result
+
+
+def update_workout(updated_workout: Workout) -> Workout:
+    pass
+
+
+def delete_workout(workout_id: str) -> Workout:
+    pass

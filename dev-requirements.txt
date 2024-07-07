@@ -1,3 +1,4 @@
 pytest
+pytest-dependency==0.6.0
 black==24.4.2
 moto

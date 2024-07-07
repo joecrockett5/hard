@@ -94,6 +94,7 @@ def append_items_to_table(set_up_aws_resources):
         )
 
 
+@pytest.mark.dependency(name="CREATE")
 @pytest.mark.usefixtures("env_vars")
 class TestCreateWorkout:
 
@@ -147,3 +148,27 @@ class TestListWorkouts:
 
         assert isinstance(results, list)
         assert len(results) == 0
+
+
+@pytest.mark.dependency(depends=["CREATE"])
+@pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+class TestGetWorkout:
+
+    def test_successful_fetch(self):
+        EXAMPLE_WORKOUT_ID = "0123"
+        example_workout = Workout.model_validate(
+            {
+                "user_id": MOCK_USER_ID,
+                "timestamp": "2024-07-06T00:00:00.000000",
+                "object_id": EXAMPLE_WORKOUT_ID,
+                "workout_date": "2024-07-06",
+            }
+        )
+        processes.create_workout(example_workout)
+
+        result = processes.get_workout(workout_id=EXAMPLE_WORKOUT_ID)
+        assert isinstance(result, Workout)
+        assert result.__dict__ == example_workout.__dict__
+
+    def test_item_doesnt_exist(self):
+        pass
