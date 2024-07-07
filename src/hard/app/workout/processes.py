@@ -63,4 +63,13 @@ def update_workout(updated_workout: Workout) -> Workout:
 
 
 def delete_workout(workout_id: str) -> Workout:
-    pass
+    db = get_db_instance()
+
+    try:
+        to_delete = get_workout(workout_id)
+    except ItemNotFoundError:
+        raise ItemNotFoundError(
+            f"No `Workout` found with `object_id`: '{workout_id}': Cannot Delete"
+        )
+
+    return db.delete(to_delete)

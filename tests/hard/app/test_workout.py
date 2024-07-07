@@ -242,3 +242,30 @@ class TestUpdateWorkout:
             match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}': Cannot Update",
         ):
             processes.update_workout(updated_workout)
+
+
+@pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+@patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
+class TestDeleteWorkout:
+
+    @pytest.mark.dependency(depends=["CREATE"])
+    @pytest.mark.usefixtures("add_example_workout_to_db")
+    def test_successful_delete(self):
+        client = boto3.client("dynamodb")
+
+        table_data_before = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data_before) == 1
+
+        result = processes.delete_workout(EXAMPLE_WORKOUT_ID)
+        assert isinstance(result, Workout)
+
+        table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data_after) == 0
+
+    def test_item_doesnt_exist(self):
+        with pytest.raises(
+            ItemNotFoundError,
+            match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}': Cannot Delete",
+        ):
+            processes.delete_workout(EXAMPLE_WORKOUT_ID)
+        pass
