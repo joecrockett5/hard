@@ -79,12 +79,24 @@ resources:
             AttributeType: S
           - AttributeName: "Timestamp"
             AttributeType: S
+          - AttributeName: "object_id"
+            AttributeType: S
 
         KeySchema:
           - AttributeName: "User_ObjectType"
             KeyType: "HASH"
           - AttributeName: "Timestamp"
             KeyType: "RANGE"
+
+        GlobalSecondaryIndexes:
+          - IndexName: ItemSearch
+
+            KeySchema:
+              - AttributeName: "object_id"
+              - KeyType: "RANGE"
+
+            Projection:
+              ProjectionType: ALL
 
     hardUserPool:
       Type: AWS::Cognito::UserPool
