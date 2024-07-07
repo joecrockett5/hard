@@ -3,6 +3,7 @@ from hard.aws.dynamodb.consts import (
     ITEM_INDEX_NAME,
     ITEM_INDEX_PARTITION,
     PARTITION_TEMPLATE,
+    ItemAlreadyExistsError,
     ItemNotFoundError,
 )
 from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
@@ -44,8 +45,17 @@ def get_workout(workout_id: str) -> Workout:
 def create_workout(workout: Workout) -> Workout:
     db = get_db_instance()
 
-    result = db.put(data_object=workout)
-    return result
+    try:
+        get_workout(workout.object_id)
+
+    except ItemNotFoundError:
+        result = db.put(data_object=workout)
+        return result
+
+    else:
+        raise ItemAlreadyExistsError(
+            f"Found `Workout` with `object_id`: '{workout.object_id}': Cannot Create"
+        )
 
 
 def update_workout(updated_workout: Workout) -> Workout:
@@ -53,6 +63,7 @@ def update_workout(updated_workout: Workout) -> Workout:
 
     try:
         get_workout(updated_workout.object_id)
+
     except ItemNotFoundError:
         raise ItemNotFoundError(
             f"No `Workout` found with `object_id`: '{updated_workout.object_id}': Cannot Update"

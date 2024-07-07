@@ -3,7 +3,6 @@ from typing import Any, Generator
 from unittest.mock import patch
 
 import boto3
-import moto
 import pytest
 
 from hard.app.workout import processes
@@ -11,15 +10,14 @@ from hard.aws.dynamodb.consts import (
     DB_PARTITION,
     DB_SORT_KEY,
     DELIMITER,
+    ItemAlreadyExistsError,
     ItemNotFoundError,
 )
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
 from hard.models.workout import Workout
 
-MOCK_USER_ID = "mock_user"
-MOCK_DYNAMO_TABLE_NAME = "mock_table"
-GSI_NAME = "ItemSearch"
+from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
 
 MOCK_PK = f"{MOCK_USER_ID}{DELIMITER}{ObjectType.WORKOUT.value}"
 
@@ -40,60 +38,6 @@ MOCK_TABLE_ITEMS = [
 
 
 @pytest.fixture
-def mock_user() -> User:
-    return User(id=MOCK_USER_ID, email="mock@user.com")
-
-
-@pytest.fixture
-def env_vars():
-    pytest.MonkeyPatch().setenv("DYNAMO_TABLE_NAME", MOCK_DYNAMO_TABLE_NAME)
-    pytest.MonkeyPatch().setenv("DYNAMO_ITEM_INDEX_NAME", GSI_NAME)
-    yield
-
-
-@pytest.fixture
-def set_up_aws_resources():
-    with moto.mock_aws():
-        client = boto3.client("dynamodb")
-        client.create_table(
-            TableName=MOCK_DYNAMO_TABLE_NAME,
-            AttributeDefinitions=[
-                {
-                    "AttributeName": DB_PARTITION,
-                    "AttributeType": "S",
-                },
-                {
-                    "AttributeName": DB_SORT_KEY,
-                    "AttributeType": "S",
-                },
-                {
-                    "AttributeName": "object_id",
-                    "AttributeType": "S",
-                },
-            ],
-            KeySchema=[
-                {
-                    "AttributeName": DB_PARTITION,
-                    "KeyType": "HASH",
-                },
-                {
-                    "AttributeName": DB_SORT_KEY,
-                    "KeyType": "RANGE",
-                },
-            ],
-            BillingMode="PAY_PER_REQUEST",
-            GlobalSecondaryIndexes=[
-                {
-                    "IndexName": GSI_NAME,
-                    "KeySchema": [{"AttributeName": "object_id", "KeyType": "HASH"}],
-                    "Projection": {"ProjectionType": "ALL"},
-                }
-            ],
-        )
-        yield client
-
-
-@pytest.fixture
 def append_items_to_table(set_up_aws_resources):
     client = set_up_aws_resources
 
@@ -104,24 +48,40 @@ def append_items_to_table(set_up_aws_resources):
         )
 
 
+EXAMPLE_WORKOUT_ID = "0123"
+
+
+@pytest.fixture
+def example_workout() -> Workout:
+    return Workout.model_validate(
+        {
+            "user_id": MOCK_USER_ID,
+            "timestamp": "2024-07-06T00:00:00.000000",
+            "object_id": EXAMPLE_WORKOUT_ID,
+            "workout_date": "2024-07-06",
+        }
+    )
+
+
+@pytest.fixture
+def add_example_workout_to_db(
+    set_up_aws_resources,
+    example_workout,
+) -> Generator[Workout, Any, Any]:
+    processes.create_workout(example_workout)
+    yield example_workout
+
+
 @pytest.mark.dependency(name="CREATE")
 @pytest.mark.usefixtures("env_vars")
 class TestCreateWorkout:
 
-    def test_successful_creation(self, set_up_aws_resources):
+    def test_successful_creation(self, set_up_aws_resources, example_workout):
         client = set_up_aws_resources
 
-        test_workout = Workout.model_validate(
-            {
-                "user_id": MOCK_USER_ID,
-                "timestamp": "2024-07-06T00:00:00.000000",
-                "object_id": "0",
-                "workout_date": "2024-07-06",
-            }
-        )
-        res = processes.create_workout(test_workout)
+        res = processes.create_workout(example_workout)
 
-        assert res == test_workout
+        assert res == example_workout
         table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
 
         assert len(table_data) == 1
@@ -131,7 +91,23 @@ class TestCreateWorkout:
         }
         workout_from_db = Workout.from_db(workout_data)
 
-        assert workout_from_db.__dict__ == test_workout.__dict__
+        assert workout_from_db.__dict__ == example_workout.__dict__
+
+    def test_item_already_exists(self, set_up_aws_resources, example_workout):
+        client = set_up_aws_resources
+        processes.create_workout(example_workout)
+
+        table_data_before = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data_before) == 1
+
+        with pytest.raises(
+            ItemAlreadyExistsError,
+            match=f"Found `Workout` with `object_id`: '{EXAMPLE_WORKOUT_ID}': Cannot Create",
+        ):
+            processes.create_workout(example_workout)
+
+        table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data_after) == 1
 
 
 @pytest.mark.usefixtures("env_vars")
@@ -160,32 +136,7 @@ class TestListWorkouts:
         assert len(results) == 0
 
 
-EXAMPLE_WORKOUT_ID = "0123"
-
-
-@pytest.fixture
-def example_workout() -> Workout:
-    return Workout.model_validate(
-        {
-            "user_id": MOCK_USER_ID,
-            "timestamp": "2024-07-06T00:00:00.000000",
-            "object_id": EXAMPLE_WORKOUT_ID,
-            "workout_date": "2024-07-06",
-        }
-    )
-
-
-@pytest.fixture
-def add_example_workout_to_db(
-    set_up_aws_resources,
-    example_workout,
-) -> Generator[Workout, Any, Any]:
-    processes.create_workout(example_workout)
-    yield example_workout
-
-
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
-@patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
 class TestGetWorkout:
 
     @pytest.mark.dependency(depends=["CREATE"])
@@ -206,7 +157,6 @@ class TestGetWorkout:
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
-@patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
 class TestUpdateWorkout:
 
     @pytest.mark.dependency(depends=["CREATE"])
@@ -245,7 +195,6 @@ class TestUpdateWorkout:
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
-@patch("hard.app.workout.processes.ITEM_INDEX_NAME", GSI_NAME)
 class TestDeleteWorkout:
 
     @pytest.mark.dependency(depends=["CREATE"])
