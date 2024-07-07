@@ -10,6 +10,7 @@ from hard.models.workout import Workout
 
 MOCK_USER_ID = "mock_user"
 MOCK_DYNAMO_TABLE_NAME = "mock_table"
+GSI_NAME = "ItemSearch"
 
 MOCK_PK = f"{MOCK_USER_ID}{DELIMITER}{ObjectType.WORKOUT.value}"
 
@@ -55,6 +56,10 @@ def set_up_aws_resources():
                     "AttributeName": DB_SORT_KEY,
                     "AttributeType": "S",
                 },
+                {
+                    "AttributeName": "object_id",
+                    "AttributeType": "S",
+                },
             ],
             KeySchema=[
                 {
@@ -67,6 +72,13 @@ def set_up_aws_resources():
                 },
             ],
             BillingMode="PAY_PER_REQUEST",
+            GlobalSecondaryIndexes=[
+                {
+                    "IndexName": GSI_NAME,
+                    "KeySchema": [{"AttributeName": "object_id", "KeyType": "RANGE"}],
+                    "Projection": {"ProjectionType": "ALL"},
+                }
+            ],
         )
         yield client
 
