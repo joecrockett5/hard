@@ -38,6 +38,7 @@ def mock_user() -> User:
 @pytest.fixture
 def env_vars():
     pytest.MonkeyPatch().setenv("DYNAMO_TABLE_NAME", MOCK_DYNAMO_TABLE_NAME)
+    pytest.MonkeyPatch().setenv("DYNAMO_ITEM_INDEX_NAME", GSI_NAME)
     yield
 
 
