@@ -1,10 +1,10 @@
 import os
-from typing import TypeVar
+from typing import Optional
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
-from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE, BaseObject
+from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE
 
 
 class DynamoDB:
@@ -12,20 +12,31 @@ class DynamoDB:
         self._client = boto3.resource("dynamodb")
         self._table = self._client.Table(table_name)
 
-    def query(self, /, key_expression, filter_expression=None) -> list[dict[str]]:
+    def query(
+        self,
+        /,
+        key_expression,
+        filter_expression=None,
+        secondary_index_name: Optional[str] = None,
+    ) -> list[dict[str]]:
         """
         Queries the DynamoDB table with the given expressions
 
         Use the `aws.dynamodb.Key` and `aws.dynamodb.Attr` objects
         to express the state of the desired keys and attributes
+
+        You can additionally provide a `secondary_index_name` to
+        search an alternate index
         """
+        kwargs = {"KeyConditionExpression": key_expression}
+
         if filter_expression:
-            response = self._table.query(
-                KeyConditionExpression=key_expression,
-                FilterExpression=filter_expression,
-            )
-        else:
-            response = self._table.query(KeyConditionExpression=key_expression)
+            kwargs.update({"FilterExpression": filter_expression})
+
+        if secondary_index_name:
+            kwargs.update({"IndexName": secondary_index_name})
+
+        response = self._table.query(**kwargs)
         return response["Items"]
 
     def put(self, /, data_object: DB_OBJECT_TYPE) -> DB_OBJECT_TYPE:
