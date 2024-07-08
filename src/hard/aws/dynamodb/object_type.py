@@ -3,6 +3,7 @@ from enum import Enum
 
 class ObjectType(Enum):
     # Objects
+    BASE_OBJECT = "base_object"
     TAG = "tag"
     WORKOUT = "workout"
     EXERCISE = "exercise"
