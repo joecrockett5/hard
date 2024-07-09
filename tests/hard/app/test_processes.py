@@ -142,13 +142,13 @@ class TestGetList:
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
-class TestGetWorkout:
+class TestGet:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_fetch(self, add_example_workout_to_db):
+    def test_successful_fetch(self, processes, add_example_workout_to_db):
         example_workout = add_example_workout_to_db
 
-        result = processes.get_workout(workout_id=EXAMPLE_WORKOUT_ID)
+        result = processes.get(workout_id=EXAMPLE_WORKOUT_ID)
 
         assert isinstance(result, Workout)
         assert result.__dict__ == example_workout.__dict__
