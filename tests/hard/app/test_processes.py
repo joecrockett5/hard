@@ -15,7 +15,6 @@ from hard.aws.dynamodb.consts import (
     ItemNotFoundError,
 )
 from hard.aws.dynamodb.object_type import ObjectType
-from hard.aws.models.user import User
 
 from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
 
@@ -37,7 +36,7 @@ MOCK_TABLE_ITEMS = [
 
 @pytest.fixture
 def processes():
-    return RestProcesses(BaseObject)
+    return RestProcesses()
 
 
 @pytest.fixture
@@ -71,8 +70,9 @@ def add_example_object_to_db(
     processes,
     set_up_aws_resources,
     example_object,
+    mock_user,
 ) -> Generator[BaseObject, Any, Any]:
-    processes.post(example_object)
+    processes.post(BaseObject, mock_user, example_object)
     yield example_object
 
 
@@ -80,10 +80,12 @@ def add_example_object_to_db(
 @pytest.mark.usefixtures("env_vars")
 class TestPost:
 
-    def test_successful_creation(self, processes, set_up_aws_resources, example_object):
+    def test_successful_creation(
+        self, mock_user, processes, set_up_aws_resources, example_object
+    ):
         client = set_up_aws_resources
 
-        res = processes.post(example_object)
+        res = processes.post(BaseObject, mock_user, example_object)
 
         assert res == example_object
         table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
@@ -97,9 +99,11 @@ class TestPost:
 
         assert object_from_db.__dict__ == example_object.__dict__
 
-    def test_item_already_exists(self, processes, set_up_aws_resources, example_object):
+    def test_item_already_exists(
+        self, mock_user, processes, set_up_aws_resources, example_object
+    ):
         client = set_up_aws_resources
-        processes.post(example_object)
+        processes.post(BaseObject, mock_user, example_object)
 
         table_data_before = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_before) == 1
@@ -108,7 +112,7 @@ class TestPost:
             ItemAlreadyExistsError,
             match=f"Found `BaseObject` with `object_id`: '{EXAMPLE_OBJECT_ID}': Cannot Create",
         ):
-            processes.post(example_object)
+            processes.post(BaseObject, mock_user, example_object)
 
         table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_after) == 1
@@ -118,7 +122,7 @@ class TestPost:
 class TestGetList:
 
     @pytest.mark.usefixtures("append_items_to_table")
-    def test_successfully_list_results(self, processes, mock_user: User):
+    def test_successfully_list_results(self, mock_user, processes):
         results = processes.get_list(mock_user)
 
         assert isinstance(results, list)
@@ -133,7 +137,7 @@ class TestGetList:
             )  # in `MOCK_TABLE_ITEMS` id is set to index
 
     @pytest.mark.usefixtures("set_up_aws_resources")
-    def test_no_results(self, processes, mock_user: User):
+    def test_no_results(self, mock_user, processes):
         results = processes.get_list(mock_user)
 
         assert isinstance(results, list)
@@ -144,33 +148,33 @@ class TestGetList:
 class TestGet:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_fetch(self, processes, add_example_object_to_db):
+    def test_successful_fetch(self, mock_user, processes, add_example_object_to_db):
         example_object = add_example_object_to_db
 
-        result = processes.get(object_id=EXAMPLE_OBJECT_ID)
+        result = processes.get(BaseObject, mock_user, object_id=EXAMPLE_OBJECT_ID)
 
         assert isinstance(result, BaseObject)
         assert result.__dict__ == example_object.__dict__
 
-    def test_item_doesnt_exist(self, processes):
+    def test_item_doesnt_exist(self, mock_user, processes):
         with pytest.raises(
             ItemNotFoundError,
             match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}'",
         ):
-            result = processes.get(object_id=EXAMPLE_OBJECT_ID)
+            result = processes.get(BaseObject, mock_user, object_id=EXAMPLE_OBJECT_ID)
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
 class TestPut:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_update(self, processes, add_example_object_to_db):
+    def test_successful_update(self, mock_user, processes, add_example_object_to_db):
         example_object = add_example_object_to_db
 
         updated_object = deepcopy(example_object)
         updated_object.timestamp = datetime.fromisoformat("2024-05-06T00:00:00.000000")
 
-        result = processes.put(updated_object)
+        result = processes.put(BaseObject, mock_user, updated_object)
 
         assert isinstance(result, BaseObject)
 
@@ -187,7 +191,7 @@ class TestPut:
         assert object_from_db.timestamp.isoformat() == "2024-05-06T00:00:00.000000"
         assert object_from_db.__dict__ == updated_object.__dict__
 
-    def test_item_doesnt_exist(self, processes, example_object):
+    def test_item_doesnt_exist(self, mock_user, processes, example_object):
         updated_object = deepcopy(example_object)
         updated_object.timestamp = datetime.fromisoformat("2024-05-06T00:00:00.000000")
 
@@ -195,7 +199,7 @@ class TestPut:
             ItemNotFoundError,
             match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}': Cannot Update",
         ):
-            processes.put(updated_object)
+            processes.put(BaseObject, mock_user, updated_object)
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
@@ -203,22 +207,21 @@ class TestDelete:
 
     @pytest.mark.dependency(depends=["CREATE"])
     @pytest.mark.usefixtures("add_example_object_to_db")
-    def test_successful_delete(self, processes):
+    def test_successful_delete(self, mock_user, processes):
         client = boto3.client("dynamodb")
 
         table_data_before = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_before) == 1
 
-        result = processes.delete(EXAMPLE_OBJECT_ID)
+        result = processes.delete(BaseObject, mock_user, EXAMPLE_OBJECT_ID)
         assert isinstance(result, BaseObject)
 
         table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_after) == 0
 
-    def test_item_doesnt_exist(self, processes):
+    def test_item_doesnt_exist(self, mock_user, processes):
         with pytest.raises(
             ItemNotFoundError,
             match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}': Cannot Delete",
         ):
-            processes.delete(EXAMPLE_OBJECT_ID)
-        pass
+            processes.delete(BaseObject, mock_user, EXAMPLE_OBJECT_ID)
