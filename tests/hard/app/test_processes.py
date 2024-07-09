@@ -70,7 +70,7 @@ def add_example_object_to_db(
     processes,
     set_up_aws_resources,
     example_object,
-) -> Generator[Workout, Any, Any]:
+) -> Generator[BaseObject, Any, Any]:
     processes.post(example_object)
     yield example_object
 
@@ -146,7 +146,7 @@ class TestGet:
     def test_successful_fetch(self, processes, add_example_object_to_db):
         example_object = add_example_object_to_db
 
-        result = processes.get(workout_id=EXAMPLE_WORKOUT_ID)
+        result = processes.get(object_id=EXAMPLE_OBJECT_ID)
 
         assert isinstance(result, BaseObject)
         assert result.__dict__ == example_object.__dict__
@@ -156,7 +156,7 @@ class TestGet:
             ItemNotFoundError,
             match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}'",
         ):
-            result = processes.get(workout_id=EXAMPLE_OBJECT_ID)
+            result = processes.get(object_id=EXAMPLE_OBJECT_ID)
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
