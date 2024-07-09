@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime
 from typing import Any, Generator
 
 import boto3
@@ -145,58 +146,58 @@ class TestGetList:
 class TestGet:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_fetch(self, processes, add_example_workout_to_db):
-        example_workout = add_example_workout_to_db
+    def test_successful_fetch(self, processes, add_example_object_to_db):
+        example_object = add_example_object_to_db
 
         result = processes.get(workout_id=EXAMPLE_WORKOUT_ID)
 
-        assert isinstance(result, Workout)
-        assert result.__dict__ == example_workout.__dict__
+        assert isinstance(result, BaseObject)
+        assert result.__dict__ == example_object.__dict__
 
-    def test_item_doesnt_exist(self):
+    def test_item_doesnt_exist(self, processes):
         with pytest.raises(
             ItemNotFoundError,
-            match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}'",
+            match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}'",
         ):
-            result = processes.get_workout(workout_id=EXAMPLE_WORKOUT_ID)
+            result = processes.get(workout_id=EXAMPLE_OBJECT_ID)
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
-class TestUpdateWorkout:
+class TestPut:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_update(self, add_example_workout_to_db):
-        example_workout = add_example_workout_to_db
+    def test_successful_update(self, processes, add_example_object_to_db):
+        example_object = add_example_object_to_db
 
-        updated_workout = deepcopy(example_workout)
-        updated_workout.notes = "UPDATED"
+        updated_object = deepcopy(example_object)
+        updated_object.timestamp = datetime.fromisoformat("2024-05-06T00:00:00.000000")
 
-        result = processes.update_workout(updated_workout)
+        result = processes.put(updated_object)
 
-        assert isinstance(result, Workout)
+        assert isinstance(result, BaseObject)
 
         client = boto3.client("dynamodb")
         table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
 
         assert len(table_data) == 1
 
-        workout_data = {
+        object_data = {
             key: value.get("S", None) for key, value in table_data[0].items()
         }
-        workout_from_db = Workout.from_db(workout_data)
+        object_from_db = BaseObject.from_db(object_data)
 
-        assert workout_from_db.notes == "UPDATED"
-        assert workout_from_db.__dict__ == updated_workout.__dict__
+        assert object_from_db.timestamp.isoformat() == "2024-05-06T00:00:00.000000"
+        assert object_from_db.__dict__ == updated_object.__dict__
 
-    def test_item_doesnt_exist(self, example_workout):
-        updated_workout = deepcopy(example_workout)
-        updated_workout.notes = "UPDATED"
+    def test_item_doesnt_exist(self, processes, example_object):
+        updated_object = deepcopy(example_object)
+        updated_object.timestamp = datetime.fromisoformat("2024-05-06T00:00:00.000000")
 
         with pytest.raises(
             ItemNotFoundError,
-            match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}': Cannot Update",
+            match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}': Cannot Update",
         ):
-            processes.update_workout(updated_workout)
+            processes.put(updated_object)
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
