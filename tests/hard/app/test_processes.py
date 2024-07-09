@@ -61,6 +61,7 @@ def example_object() -> BaseObject:
             "user_id": MOCK_USER_ID,
             "timestamp": "2024-07-06T00:00:00.000000",
             "object_id": EXAMPLE_OBJECT_ID,
+            "object_type": ObjectType.BASE_OBJECT,
         }
     )
 
