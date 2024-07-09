@@ -16,8 +16,6 @@ from hard.aws.dynamodb.consts import (
 )
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
-from hard.models.workout import Workout
-from tests.hard.app.test_workout import EXAMPLE_WORKOUT_ID
 
 from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
 
@@ -57,13 +55,12 @@ EXAMPLE_OBJECT_ID = "0123"
 
 
 @pytest.fixture
-def example_object() -> Workout:
-    return Workout.model_validate(
+def example_object() -> BaseObject:
+    return BaseObject.model_validate(
         {
             "user_id": MOCK_USER_ID,
             "timestamp": "2024-07-06T00:00:00.000000",
             "object_id": EXAMPLE_OBJECT_ID,
-            "workout_date": "2024-07-06",
         }
     )
 
@@ -201,26 +198,26 @@ class TestPut:
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
-class TestDeleteWorkout:
+class TestDelete:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    @pytest.mark.usefixtures("add_example_workout_to_db")
-    def test_successful_delete(self):
+    @pytest.mark.usefixtures("add_example_object_to_db")
+    def test_successful_delete(self, processes):
         client = boto3.client("dynamodb")
 
         table_data_before = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_before) == 1
 
-        result = processes.delete_workout(EXAMPLE_WORKOUT_ID)
-        assert isinstance(result, Workout)
+        result = processes.delete(EXAMPLE_OBJECT_ID)
+        assert isinstance(result, BaseObject)
 
         table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_after) == 0
 
-    def test_item_doesnt_exist(self):
+    def test_item_doesnt_exist(self, processes):
         with pytest.raises(
             ItemNotFoundError,
-            match=f"No `Workout` found with `object_id`: '{EXAMPLE_WORKOUT_ID}': Cannot Delete",
+            match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}': Cannot Delete",
         ):
-            processes.delete_workout(EXAMPLE_WORKOUT_ID)
+            processes.delete(EXAMPLE_OBJECT_ID)
         pass
