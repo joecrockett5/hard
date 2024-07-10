@@ -15,6 +15,7 @@ from hard.aws.dynamodb.consts import (
     ItemNotFoundError,
 )
 from hard.aws.dynamodb.object_type import ObjectType
+from hard.models.workout import Workout
 
 from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
 
@@ -168,15 +169,23 @@ class TestGet:
 class TestPut:
 
     @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_update(self, mock_user, processes, add_example_object_to_db):
-        example_object = add_example_object_to_db
+    def test_successful_update(self, mock_user, processes):
+        example_object = Workout.model_validate(
+            {
+                "object_id": "1",
+                "timestamp": "2024-05-06T00:00:00.000000",
+                "user_id": MOCK_USER_ID,
+                "workout_date": "2024-05-06",
+            }
+        )
+        processes.post(Workout, mock_user, example_object)
 
         updated_object = deepcopy(example_object)
-        updated_object.timestamp = datetime.fromisoformat("2024-05-06T00:00:00.000000")
+        updated_object.notes = "UPDATED"
 
-        result = processes.put(BaseObject, mock_user, updated_object)
+        result = processes.put(Workout, mock_user, updated_object)
 
-        assert isinstance(result, BaseObject)
+        assert isinstance(result, Workout)
 
         client = boto3.client("dynamodb")
         table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
@@ -186,9 +195,9 @@ class TestPut:
         object_data = {
             key: value.get("S", None) for key, value in table_data[0].items()
         }
-        object_from_db = BaseObject.from_db(object_data)
+        object_from_db = Workout.from_db(object_data)
 
-        assert object_from_db.timestamp.isoformat() == "2024-05-06T00:00:00.000000"
+        assert object_from_db.notes == "UPDATED"
         assert object_from_db.__dict__ == updated_object.__dict__
 
     def test_item_doesnt_exist(self, mock_user, processes, example_object):
