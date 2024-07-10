@@ -3,12 +3,16 @@ from enum import Enum
 
 class ObjectType(Enum):
     # Objects
-    BASE_OBJECT = "base_object"
-    TAG = "tag"
-    WORKOUT = "workout"
-    EXERCISE = "exercise"
-    SET = "set"
+    BASE_OBJECT = "BaseObject"
+    TAG = "Tag"
+    WORKOUT = "Workout"
+    EXERCISE = "Exercise"
+    SET = "Set"
 
     # Joins
-    TAG_JOIN = "tag_join"
-    EXCERCISE_JOIN = "exercise_join"
+    TAG_JOIN = "TagJoin"
+    EXCERCISE_JOIN = "ExerciseJoin"
+
+    @classmethod
+    def from_object_class(cls, object_class):
+        return cls(object_class.__name__)
