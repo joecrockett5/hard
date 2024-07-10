@@ -5,6 +5,8 @@ from hard.aws.dynamodb.consts import (
     ITEM_INDEX_NAME,
     ITEM_INDEX_PARTITION,
     PARTITION_TEMPLATE,
+    ItemAlreadyExistsError,
+    ItemNotFoundError,
 )
 from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
@@ -38,7 +40,19 @@ class RestProcesses:
         user: User,
         object_id: str,
     ) -> DB_OBJECT_TYPE:
-        pass
+        db = get_db_instance()
+        query = db.query(
+            secondary_index_name=ITEM_INDEX_NAME,
+            key_expression=Key(ITEM_INDEX_PARTITION).eq(object_id),
+        )
+        try:
+            item = query[0]
+        except IndexError:
+            raise ItemNotFoundError(
+                f"No `{ObjectType.from_object_class(object_cls).value}` found with `object_id`: '{object_id}'"
+            )
+        result = object_cls.from_db(item)
+        return result
 
     @staticmethod
     def post(
