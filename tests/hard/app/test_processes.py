@@ -123,7 +123,7 @@ class TestGetList:
 
     @pytest.mark.usefixtures("append_items_to_table")
     def test_successfully_list_results(self, mock_user, processes):
-        results = processes.get_list(mock_user)
+        results = processes.get_list(BaseObject, mock_user)
 
         assert isinstance(results, list)
         assert len(MOCK_TABLE_ITEMS) > 0
@@ -138,7 +138,7 @@ class TestGetList:
 
     @pytest.mark.usefixtures("set_up_aws_resources")
     def test_no_results(self, mock_user, processes):
-        results = processes.get_list(mock_user)
+        results = processes.get_list(BaseObject, mock_user)
 
         assert isinstance(results, list)
         assert len(results) == 0
