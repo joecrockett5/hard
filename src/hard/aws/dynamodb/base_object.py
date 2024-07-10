@@ -6,6 +6,7 @@ from pydantic import BaseModel, field_serializer, field_validator
 
 from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, DELIMITER
 from hard.aws.dynamodb.object_type import ObjectType
+from hard.aws.models.user import User
 
 
 class BaseObject(BaseModel):
@@ -63,6 +64,9 @@ class BaseObject(BaseModel):
         object.update({"timestamp": object.pop(DB_SORT_KEY)})
 
         return cls.model_validate(object)
+
+    def owned_by(self, user: User):
+        return self.user_id == user.id
 
 
 DB_OBJECT_TYPE = TypeVar("DB_OBJECT_TYPE", bound=BaseObject)
