@@ -5,6 +5,7 @@ from hard.aws.dynamodb.consts import (
     ITEM_INDEX_NAME,
     ITEM_INDEX_PARTITION,
     PARTITION_TEMPLATE,
+    ItemAccessUnauthorizedError,
     ItemAlreadyExistsError,
     ItemNotFoundError,
 )
@@ -58,6 +59,12 @@ class RestProcesses:
             )
 
         result = object_cls.from_db(item)
+
+        if not result.owned_by(user):
+            raise ItemAccessUnauthorizedError(
+                f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Fetch"
+            )
+
         return result
 
     @staticmethod
@@ -72,6 +79,10 @@ class RestProcesses:
             RestProcesses.get(object_cls, user, data_object.object_id)
 
         except ItemNotFoundError:
+            if not data_object.owned_by(user):
+                raise ItemAccessUnauthorizedError(
+                    f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Create"
+                )
             result = db.put(data_object=data_object)
             return result
 
@@ -87,6 +98,11 @@ class RestProcesses:
         updated_object: DB_OBJECT_TYPE,
     ) -> DB_OBJECT_TYPE:
         db = get_db_instance()
+
+        if not updated_object.owned_by(user):
+            raise ItemAccessUnauthorizedError(
+                f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Update"
+            )
 
         try:
             RestProcesses.get(object_cls, user, updated_object.object_id)
@@ -113,6 +129,11 @@ class RestProcesses:
         except ItemNotFoundError:
             raise ItemNotFoundError(
                 f"No `{ObjectType.from_object_class(object_cls).value}` found with `object_id`: '{object_id}': Cannot Delete"
+            )
+
+        if not to_delete.owned_by(user):
+            raise ItemAccessUnauthorizedError(
+                f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Delete"
             )
 
         return db.delete(to_delete)

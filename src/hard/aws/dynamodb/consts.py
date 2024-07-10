@@ -14,3 +14,7 @@ class ItemNotFoundError(Exception):
 
 class ItemAlreadyExistsError(Exception):
     pass
+
+
+class ItemAccessUnauthorizedError(Exception):
+    pass
