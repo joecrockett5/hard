@@ -27,9 +27,9 @@ def get_workout(req: Request, workout_id: str):
     try:
         workout = RestProcesses.get(Workout, user, UUID(workout_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return workout
 
@@ -40,9 +40,9 @@ def create_workout(req: Request, workout: Workout):
     try:
         created_workout = RestProcesses.post(Workout, user, workout)
     except ItemAlreadyExistsError as err:
-        raise HTTPException(status_code=409, detail=err)
+        raise HTTPException(status_code=409, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return created_workout
 
@@ -54,9 +54,9 @@ def put(req: Request, workout_id: str, workout: Workout):
     try:
         updated_workout = RestProcesses.put(Workout, user, workout)
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return updated_workout
 
@@ -67,8 +67,8 @@ def delete(req: Request, workout_id: str):
     try:
         deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return deleted_workout

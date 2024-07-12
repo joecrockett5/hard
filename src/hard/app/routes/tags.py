@@ -27,9 +27,9 @@ def get_tag(req: Request, tag_id: str):
     try:
         tag = RestProcesses.get(Tag, user, UUID(tag_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return tag
 
@@ -40,9 +40,9 @@ def create_tag(req: Request, tag: Tag):
     try:
         created_tag = RestProcesses.post(Tag, user, tag)
     except ItemAlreadyExistsError as err:
-        raise HTTPException(status_code=409, detail=err)
+        raise HTTPException(status_code=409, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return created_tag
 
@@ -54,9 +54,9 @@ def put(req: Request, tag_id: str, tag: Tag):
     try:
         updated_tag = RestProcesses.put(Tag, user, tag)
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return updated_tag
 
@@ -67,8 +67,8 @@ def delete(req: Request, tag_id: str):
     try:
         deleted_tag = RestProcesses.delete(Tag, user, UUID(tag_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return deleted_tag

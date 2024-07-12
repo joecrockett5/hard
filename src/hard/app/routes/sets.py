@@ -27,9 +27,9 @@ def get_set(req: Request, set_id: str):
     try:
         set = RestProcesses.get(Set, user, UUID(set_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return set
 
@@ -40,9 +40,9 @@ def create_set(req: Request, set: Set):
     try:
         created_set = RestProcesses.post(Set, user, set)
     except ItemAlreadyExistsError as err:
-        raise HTTPException(status_code=409, detail=err)
+        raise HTTPException(status_code=409, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return created_set
 
@@ -54,9 +54,9 @@ def put(req: Request, set_id: str, set: Set):
     try:
         updated_set = RestProcesses.put(Set, user, set)
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return updated_set
 
@@ -67,8 +67,8 @@ def delete(req: Request, set_id: str):
     try:
         deleted_set = RestProcesses.delete(Set, user, UUID(set_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return deleted_set

@@ -27,9 +27,9 @@ def get_exercise(req: Request, exercise_id: str):
     try:
         exercise = RestProcesses.get(Exercise, user, UUID(exercise_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return exercise
 
@@ -40,9 +40,9 @@ def create_exercise(req: Request, exercise: Exercise):
     try:
         created_exercise = RestProcesses.post(Exercise, user, exercise)
     except ItemAlreadyExistsError as err:
-        raise HTTPException(status_code=409, detail=err)
+        raise HTTPException(status_code=409, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return created_exercise
 
@@ -54,9 +54,9 @@ def put(req: Request, exercise_id: str, exercise: Exercise):
     try:
         updated_exercise = RestProcesses.put(Exercise, user, exercise)
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return updated_exercise
 
@@ -67,8 +67,8 @@ def delete(req: Request, exercise_id: str):
     try:
         deleted_exercise = RestProcesses.delete(Exercise, user, UUID(exercise_id))
     except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=404, detail=str(err))
     except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=err)
+        raise HTTPException(status_code=401, detail=str(err))
 
     return deleted_exercise
