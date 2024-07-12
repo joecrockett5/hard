@@ -182,6 +182,17 @@ class TestGet:
         ):
             result = processes.get(BaseObject, mock_user, object_id=EXAMPLE_OBJECT_ID)
 
+    def test_user_mismatch(self, fake_user, processes, add_example_object_to_db):
+        example_object = add_example_object_to_db
+
+        with pytest.raises(
+            ItemAccessUnauthorizedError,
+            match=re.escape(
+                f"`{example_object.object_type.value}` Item not owned by current user ({fake_user.id}): Cannot Fetch"
+            ),
+        ):
+            processes.get(BaseObject, fake_user, EXAMPLE_OBJECT_ID)
+
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
 class TestPut:
