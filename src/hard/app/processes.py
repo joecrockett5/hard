@@ -131,7 +131,7 @@ class RestProcesses:
                 f"No `{ObjectType.from_object_class(object_cls).value}` found with `object_id`: '{object_id}': Cannot Delete"
             )
 
-        if not to_delete.owned_by(user):
+        except ItemAccessUnauthorizedError:
             raise ItemAccessUnauthorizedError(
                 f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Delete"
             )

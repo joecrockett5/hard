@@ -239,6 +239,7 @@ class TestPut:
         ):
             processes.put(BaseObject, mock_user, updated_object)
 
+    @pytest.mark.dependency(depends=["CREATE"])
     def test_user_mismatch(self, mock_user, fake_user, processes):
         example_object = Workout.model_validate(
             {
@@ -298,3 +299,22 @@ class TestDelete:
             match=f"No `BaseObject` found with `object_id`: '{EXAMPLE_OBJECT_ID}': Cannot Delete",
         ):
             processes.delete(BaseObject, mock_user, EXAMPLE_OBJECT_ID)
+
+    @pytest.mark.dependency(depends=["CREATE"])
+    def test_user_mismatch(self, fake_user, processes, add_example_object_to_db):
+        example_object = add_example_object_to_db
+        client = boto3.client("dynamodb")
+
+        table_data_before = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data_before) == 1
+
+        with pytest.raises(
+            ItemAccessUnauthorizedError,
+            match=re.escape(
+                f"`{example_object.object_type.value}` Item not owned by current user ({fake_user.id}): Cannot Delete"
+            ),
+        ):
+            processes.delete(BaseObject, fake_user, EXAMPLE_OBJECT_ID)
+
+        table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data_after) == 1
