@@ -22,4 +22,4 @@ def get_user_claims(request: Request) -> User:
         email = claims["email"]
     except KeyError:
         raise AuthorizationError("Unable to get user claims")
-    return User(user_id, email)
+    return User.model_validate({"user_id": user_id, "email": email})
