@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TypeVar
+from uuid import UUID, uuid4
 
 from dateutil import parser as date_parser
 from pydantic import BaseModel, field_serializer, field_validator
@@ -15,7 +16,7 @@ class BaseObject(BaseModel):
     user_id: str
     timestamp: datetime
     object_type: ObjectType
-    object_id: str
+    object_id: UUID | None = None
 
     # `created` handling
     @field_validator("timestamp", mode="before")
@@ -36,6 +37,16 @@ class BaseObject(BaseModel):
     @field_serializer("object_type")
     def get_value(self, object_type: ObjectType):
         return object_type.value
+
+    # `object_id` handling
+    @field_validator("object_id")
+    @classmethod
+    def to_uuid(cls, object_id: str):
+        return UUID(object_id)
+
+    @field_serializer("object_id")
+    def to_str(self, object_id: UUID):
+        return str(object_id)
 
     def to_db(self):
         as_dict = self.model_dump()
@@ -67,6 +78,15 @@ class BaseObject(BaseModel):
 
     def owned_by(self, user: User):
         return self.user_id == user.id
+
+    def generate_id(self) -> UUID:
+        if self.object_id is not None:
+            raise ReferenceError(
+                f"`{self.object_type.value}` Item already has an `object_id`"
+            )
+        new_id = uuid4()
+        self.object_id = new_id
+        return new_id
 
 
 DB_OBJECT_TYPE = TypeVar("DB_OBJECT_TYPE", bound=BaseObject)
