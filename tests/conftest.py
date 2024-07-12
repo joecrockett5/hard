@@ -6,12 +6,18 @@ from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, ITEM_INDEX_NAME
 from hard.aws.models.user import User
 
 MOCK_USER_ID = "mock_user"
+FAKE_USER_ID = "fake_user"
 MOCK_DYNAMO_TABLE_NAME = "mock_table"
 
 
 @pytest.fixture
 def mock_user() -> User:
     return User(id=MOCK_USER_ID, email="mock@user.com")
+
+
+@pytest.fixture
+def fake_user() -> User:
+    return User(id=FAKE_USER_ID, email="fake@user.com")
 
 
 @pytest.fixture

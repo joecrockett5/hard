@@ -1,3 +1,4 @@
+import re
 from copy import deepcopy
 from datetime import datetime
 from typing import Any, Generator
@@ -11,13 +12,14 @@ from hard.aws.dynamodb.consts import (
     DB_PARTITION,
     DB_SORT_KEY,
     DELIMITER,
+    ItemAccessUnauthorizedError,
     ItemAlreadyExistsError,
     ItemNotFoundError,
 )
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.models.workout import Workout
 
-from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
+from ...conftest import FAKE_USER_ID, MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
 
 MOCK_PK = f"{MOCK_USER_ID}{DELIMITER}{ObjectType.BASE_OBJECT.value}"
 
@@ -117,6 +119,22 @@ class TestPost:
 
         table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_after) == 1
+
+    def test_user_mismatch(
+        self, fake_user, processes, set_up_aws_resources, example_object
+    ):
+        client = set_up_aws_resources
+
+        with pytest.raises(
+            ItemAccessUnauthorizedError,
+            match=re.escape(
+                f"`{example_object.object_type.value}` Item not owned by current user ({fake_user.id}): Cannot Create"
+            ),
+        ):
+            processes.post(BaseObject, fake_user, example_object)
+
+        table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+        assert len(table_data) == 0
 
 
 @pytest.mark.usefixtures("env_vars")
