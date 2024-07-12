@@ -2,7 +2,7 @@ from fastapi import APIRouter, FastAPI
 from mangum import Mangum
 from starlette.requests import Request
 
-from hard.app import exercises, sets, tags, workouts
+from hard.app.routes import exercises, sets, tags, workouts
 from hard.aws.interfaces.fastapi import request
 from hard.aws.models.user import User
 
