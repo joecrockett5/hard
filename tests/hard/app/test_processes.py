@@ -239,6 +239,41 @@ class TestPut:
         ):
             processes.put(BaseObject, mock_user, updated_object)
 
+    def test_user_mismatch(self, mock_user, fake_user, processes):
+        example_object = Workout.model_validate(
+            {
+                "object_id": "1",
+                "timestamp": "2024-05-06T00:00:00.000000",
+                "user_id": MOCK_USER_ID,
+                "workout_date": "2024-05-06",
+            }
+        )
+        processes.post(Workout, mock_user, example_object)
+
+        updated_object = deepcopy(example_object)
+        updated_object.notes = "UPDATED"
+
+        with pytest.raises(
+            ItemAccessUnauthorizedError,
+            match=re.escape(
+                f"`{example_object.object_type.value}` Item not owned by current user ({fake_user.id}): Cannot Update"
+            ),
+        ):
+            processes.put(Workout, fake_user, updated_object)
+
+        client = boto3.client("dynamodb")
+        table_data = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
+
+        assert len(table_data) == 1
+
+        object_data = {
+            key: value.get("S", None) for key, value in table_data[0].items()
+        }
+        object_from_db = Workout.from_db(object_data)
+
+        assert object_from_db.notes == None
+        assert object_from_db.__dict__ == example_object.__dict__
+
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
 class TestDelete:
