@@ -32,7 +32,13 @@ provider:
             - "dynamodb:UpdateItem"
             - "dynamodb:DeleteItem"
             - "dynamodb:BatchWriteItem"
-          Resource: !GetAtt hardResourcesTable.Arn
+          Resource:
+            - !GetAtt hardResourcesTable.Arn
+            - Fn::Join:
+                - "/"
+                - - !GetAtt hardResourcesTable.Arn
+                  - "index"
+                  - "ItemSearch"
 
 functions:
   hard-api:
