@@ -10,65 +10,65 @@ from hard.aws.dynamodb.consts import (
     ItemNotFoundError,
 )
 from hard.aws.interfaces.fastapi import request
-from hard.models.workout import Workout
+from hard.models.set import Set
 
-router = APIRouter(prefix="/workouts")
+router = APIRouter(prefix="/sets")
 
 
-@router.get("", response_model=list[Workout])
-def list_workouts(req: Request) -> list[Workout]:
+@router.get("", response_model=list[Set])
+def list_sets(req: Request) -> list[Set]:
     user = request.get_user_claims(req)
-    return RestProcesses.get_list(Workout, user)
+    return RestProcesses.get_list(Set, user)
 
 
-@router.get("/{workout_id}", response_model=Workout)
-def get_workout(req: Request, workout_id: str):
+@router.get("/{set_id}", response_model=Set)
+def get_set(req: Request, set_id: str):
     user = request.get_user_claims(req)
     try:
-        workout = RestProcesses.get(Workout, user, UUID(workout_id))
+        set = RestProcesses.get(Set, user, UUID(set_id))
     except ItemNotFoundError as err:
         return {"error": err}, 404
     except ItemAccessUnauthorizedError as err:
         return {"error": err}, 401
 
-    return workout
+    return set
 
 
-@router.post("", response_model=Workout)
-def create_workout(req: Request, workout: Workout):
+@router.post("", response_model=Set)
+def create_set(req: Request, set: Set):
     user = request.get_user_claims(req)
     try:
-        created_workout = RestProcesses.post(Workout, user, workout)
+        created_set = RestProcesses.post(Set, user, set)
     except ItemAlreadyExistsError as err:
         return {"error": err}, 409
     except ItemAccessUnauthorizedError as err:
         return {"error": err}, 401
 
-    return created_workout
+    return created_set
 
 
-@router.put("/{workout_id}", response_model=Workout)
-def put(req: Request, workout_id: str, workout: Workout):
+@router.put("/{set_id}", response_model=Set)
+def put(req: Request, set_id: str, set: Set):
     user = request.get_user_claims(req)
-    workout.object_id = UUID(workout_id)
+    set.object_id = UUID(set_id)
     try:
-        updated_workout = RestProcesses.put(Workout, user, workout)
+        updated_set = RestProcesses.put(Set, user, set)
     except ItemNotFoundError as err:
         return {"error": err}, 404
     except ItemAccessUnauthorizedError as err:
         return {"error": err}, 401
 
-    return updated_workout
+    return updated_set
 
 
-@router.delete("/{workout_id}", response_model=Workout)
-def delete(req: Request, workout_id: str):
+@router.delete("/{set_id}", response_model=Set)
+def delete(req: Request, set_id: str):
     user = request.get_user_claims(req)
     try:
-        deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
+        deleted_set = RestProcesses.delete(Set, user, UUID(set_id))
     except ItemNotFoundError as err:
         return {"error": err}, 404
     except ItemAccessUnauthorizedError as err:
         return {"error": err}, 401
 
-    return deleted_workout
+    return deleted_set
