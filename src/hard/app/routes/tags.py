@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
 from hard.app.processes import RestProcesses
@@ -27,22 +27,22 @@ def get_tag(req: Request, tag_id: str):
     try:
         tag = RestProcesses.get(Tag, user, UUID(tag_id))
     except ItemNotFoundError as err:
-        return {"error": err}, 404
+        raise HTTPException(status_code=404, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return tag
 
 
-@router.post("", response_model=Tag)
+@router.post("", response_model=Tag, status_code=201)
 def create_tag(req: Request, tag: Tag):
     user = request.get_user_claims(req)
     try:
         created_tag = RestProcesses.post(Tag, user, tag)
     except ItemAlreadyExistsError as err:
-        return {"error": err}, 409
+        raise HTTPException(status_code=409, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return created_tag
 
@@ -54,9 +54,9 @@ def put(req: Request, tag_id: str, tag: Tag):
     try:
         updated_tag = RestProcesses.put(Tag, user, tag)
     except ItemNotFoundError as err:
-        return {"error": err}, 404
+        raise HTTPException(status_code=404, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return updated_tag
 
@@ -67,8 +67,8 @@ def delete(req: Request, tag_id: str):
     try:
         deleted_tag = RestProcesses.delete(Tag, user, UUID(tag_id))
     except ItemNotFoundError as err:
-        return {"error": err}, 404
+        raise HTTPException(status_code=404, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return deleted_tag

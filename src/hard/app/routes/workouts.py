@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
 from hard.app.processes import RestProcesses
@@ -27,22 +27,22 @@ def get_workout(req: Request, workout_id: str):
     try:
         workout = RestProcesses.get(Workout, user, UUID(workout_id))
     except ItemNotFoundError as err:
-        return {"error": err}, 404
+        raise HTTPException(status_code=404, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return workout
 
 
-@router.post("", response_model=Workout)
+@router.post("", response_model=Workout, status_code=201)
 def create_workout(req: Request, workout: Workout):
     user = request.get_user_claims(req)
     try:
         created_workout = RestProcesses.post(Workout, user, workout)
     except ItemAlreadyExistsError as err:
-        return {"error": err}, 409
+        raise HTTPException(status_code=409, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return created_workout
 
@@ -54,9 +54,9 @@ def put(req: Request, workout_id: str, workout: Workout):
     try:
         updated_workout = RestProcesses.put(Workout, user, workout)
     except ItemNotFoundError as err:
-        return {"error": err}, 404
+        raise HTTPException(status_code=404, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return updated_workout
 
@@ -67,8 +67,8 @@ def delete(req: Request, workout_id: str):
     try:
         deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
     except ItemNotFoundError as err:
-        return {"error": err}, 404
+        raise HTTPException(status_code=404, detail=err)
     except ItemAccessUnauthorizedError as err:
-        return {"error": err}, 401
+        raise HTTPException(status_code=401, detail=err)
 
     return deleted_workout
