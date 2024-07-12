@@ -2,6 +2,7 @@ import re
 from copy import deepcopy
 from datetime import datetime
 from typing import Any, Generator
+from uuid import uuid4
 
 import boto3
 import pytest
@@ -19,7 +20,7 @@ from hard.aws.dynamodb.consts import (
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.models.workout import Workout
 
-from ...conftest import FAKE_USER_ID, MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
+from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
 
 MOCK_PK = f"{MOCK_USER_ID}{DELIMITER}{ObjectType.BASE_OBJECT.value}"
 
@@ -27,12 +28,12 @@ MOCK_TABLE_ITEMS = [
     {
         DB_PARTITION: {"S": MOCK_PK},
         DB_SORT_KEY: {"S": "2024-05-06T00:00:00.000000"},
-        "object_id": {"S": "0"},
+        "object_id": {"S": str(uuid4())},
     },
     {
         DB_PARTITION: {"S": MOCK_PK},
         DB_SORT_KEY: {"S": "2024-07-06T00:00:00.000000"},
-        "object_id": {"S": "1"},
+        "object_id": {"S": str(uuid4())},
     },
 ]
 
@@ -53,7 +54,7 @@ def append_items_to_table(set_up_aws_resources):
         )
 
 
-EXAMPLE_OBJECT_ID = "0123"
+EXAMPLE_OBJECT_ID = str(uuid4())
 
 
 @pytest.fixture
@@ -148,12 +149,9 @@ class TestGetList:
         assert len(MOCK_TABLE_ITEMS) > 0
         assert len(results) == len(MOCK_TABLE_ITEMS)
 
-        for index, item in enumerate(results):
+        for item in results:
             assert isinstance(item, BaseObject)
             assert item.object_type == ObjectType.BASE_OBJECT
-            assert item.object_id == str(
-                index
-            )  # in `MOCK_TABLE_ITEMS` id is set to index
 
     @pytest.mark.usefixtures("set_up_aws_resources")
     def test_no_results(self, mock_user, processes):
@@ -201,7 +199,7 @@ class TestPut:
     def test_successful_update(self, mock_user, processes):
         example_object = Workout.model_validate(
             {
-                "object_id": "1",
+                "object_id": str(uuid4()),
                 "timestamp": "2024-05-06T00:00:00.000000",
                 "user_id": MOCK_USER_ID,
                 "workout_date": "2024-05-06",
@@ -243,7 +241,7 @@ class TestPut:
     def test_user_mismatch(self, mock_user, fake_user, processes):
         example_object = Workout.model_validate(
             {
-                "object_id": "1",
+                "object_id": str(uuid4()),
                 "timestamp": "2024-05-06T00:00:00.000000",
                 "user_id": MOCK_USER_ID,
                 "workout_date": "2024-05-06",

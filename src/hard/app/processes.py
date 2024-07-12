@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE
 from hard.aws.dynamodb.consts import (
     DB_PARTITION,
@@ -41,13 +43,13 @@ class RestProcesses:
     def get(
         object_cls: DB_OBJECT_TYPE,
         user: User,
-        object_id: str,
+        object_id: UUID,
     ) -> DB_OBJECT_TYPE:
         db = get_db_instance()
 
         query = db.query(
             secondary_index_name=ITEM_INDEX_NAME,
-            key_expression=Key(ITEM_INDEX_PARTITION).eq(object_id),
+            key_expression=Key(ITEM_INDEX_PARTITION).eq(str(object_id)),
         )
 
         try:
@@ -75,8 +77,10 @@ class RestProcesses:
     ) -> DB_OBJECT_TYPE:
         db = get_db_instance()
 
+        object_id = data_object.object_id or data_object.generate_id()
+
         try:
-            RestProcesses.get(object_cls, user, data_object.object_id)
+            RestProcesses.get(object_cls, user, object_id)
 
         except ItemNotFoundError:
             if not data_object.owned_by(user):
@@ -104,6 +108,11 @@ class RestProcesses:
                 f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Update"
             )
 
+        if not updated_object.object_id:
+            raise ReferenceError(
+                f"`{updated_object.object_type.value}` Item does not have a valid `object_id`"
+            )
+
         try:
             RestProcesses.get(object_cls, user, updated_object.object_id)
 
@@ -119,7 +128,7 @@ class RestProcesses:
     def delete(
         object_cls: DB_OBJECT_TYPE,
         user: User,
-        object_id: str,
+        object_id: UUID,
     ) -> DB_OBJECT_TYPE:
         db = get_db_instance()
 
