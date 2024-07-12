@@ -2,12 +2,15 @@ from fastapi import APIRouter, FastAPI
 from mangum import Mangum
 from starlette.requests import Request
 
-from hard.app import workouts
+from hard.app import exercises, sets, tags, workouts
 from hard.aws.interfaces.fastapi import request
 from hard.aws.models.user import User
 
 api = APIRouter(prefix="/api")
 api.include_router(workouts.router)
+api.include_router(exercises.router)
+api.include_router(sets.router)
+api.include_router(tags.router)
 
 
 @api.get("/user", response_model=User)
