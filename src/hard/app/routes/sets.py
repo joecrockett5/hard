@@ -1,9 +1,10 @@
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter
 from starlette.requests import Request
 
-from hard.app.processes import RestProcesses
+from hard.app.processes import RestProcesses, sets_from_ids
 from hard.aws.interfaces.fastapi import request
 from hard.models.set import Set
 
@@ -13,8 +14,18 @@ router = APIRouter(prefix="/sets")
 @router.get("", response_model=list[Set])
 async def list_sets(
     req: Request,
+    workout_id: Optional[UUID] = None,
+    exercise_id: Optional[UUID] = None,
 ) -> list[Set]:
     user = request.get_user_claims(req)
+
+    if workout_id or exercise_id:
+        return sets_from_ids(
+            user,
+            workout_id=workout_id,
+            exercise_id=exercise_id,
+        )
+
     return RestProcesses.get_list(Set, user)
 
 
