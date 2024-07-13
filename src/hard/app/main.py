@@ -31,22 +31,22 @@ app.include_router(api)
 
 
 @app.exception_handler(InvalidAttributeChangeError)
-async def invalid_attr_exc_handler(exc: InvalidAttributeChangeError):
+async def invalid_attr_exc_handler(_req: Request, exc: InvalidAttributeChangeError):
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @app.exception_handler(ItemAccessUnauthorizedError)
-async def item_access_auth_exc_handler(exc: ItemAccessUnauthorizedError):
+async def item_access_auth_exc_handler(_req: Request, exc: ItemAccessUnauthorizedError):
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
 
 
 @app.exception_handler(ItemNotFoundError)
-async def item_not_found_exc_handler(exc: ItemNotFoundError):
+async def item_not_found_exc_handler(_req: Request, exc: ItemNotFoundError):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
 @app.exception_handler(ItemAlreadyExistsError)
-async def item_already_exists_exc_handler(exc: ItemAlreadyExistsError):
+async def item_already_exists_exc_handler(_req: Request, exc: ItemAlreadyExistsError):
     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
 
 
