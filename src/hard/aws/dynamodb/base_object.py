@@ -41,11 +41,6 @@ class BaseObject(BaseModel):
         return object_type.value
 
     # `object_id` handling
-    @field_validator("object_id", mode="before")
-    @classmethod
-    def to_uuid(cls, object_id: str):
-        return UUID(object_id)
-
     @field_serializer("object_id")
     def to_str(self, object_id: UUID):
         return str(object_id)

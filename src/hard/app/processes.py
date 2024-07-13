@@ -173,7 +173,7 @@ def exercise_join_filter(
     partition = PARTITION_TEMPLATE.format(
         **{
             "user_id": user.id,
-            "object_type": ObjectType.EXCERCISE_JOIN,
+            "object_type": ObjectType.EXCERCISE_JOIN.value,
         }
     )
 
@@ -181,7 +181,7 @@ def exercise_join_filter(
     if exercise_id:
         filter = Attr("exercise_id").eq(str(exercise_id))
     if workout_id:
-        workout_filter = Attr("workout_id").eq(workout_id)
+        workout_filter = Attr("workout_id").eq(str(workout_id))
         filter = filter & workout_filter if filter else workout_filter
 
     json_items = db.query(

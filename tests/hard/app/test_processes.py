@@ -7,7 +7,7 @@ from uuid import uuid4
 import boto3
 import pytest
 
-from hard.app.processes import RestProcesses
+from hard.app import processes as processes_module
 from hard.aws.dynamodb.base_object import BaseObject
 from hard.aws.dynamodb.consts import (
     DB_PARTITION,
@@ -19,6 +19,7 @@ from hard.aws.dynamodb.consts import (
     ItemNotFoundError,
 )
 from hard.aws.dynamodb.object_type import ObjectType
+from hard.models.exercise_join import ExerciseJoin
 from hard.models.workout import Workout
 
 from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
@@ -41,7 +42,7 @@ MOCK_TABLE_ITEMS = [
 
 @pytest.fixture
 def processes():
-    return RestProcesses()
+    return processes_module.RestProcesses()
 
 
 @pytest.fixture
@@ -329,3 +330,54 @@ class TestDelete:
 
         table_data_after = client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"]
         assert len(table_data_after) == 1
+
+
+@pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+class TestExerciseJoinFilter:
+
+    @pytest.mark.dependency(depends=["CREATE"])
+    def test_successful_retrieval(self, mock_user, processes):
+        MOCK_EXERCISE_ID = uuid4()
+        MOCK_WORKOUT_ID = uuid4()
+
+        mock_join = ExerciseJoin.model_validate(
+            {
+                "user_id": MOCK_USER_ID,
+                "timestamp": "2024-07-06T00:00:00.000000",
+                "workout_id": MOCK_WORKOUT_ID,
+                "exercise_id": MOCK_EXERCISE_ID,
+            }
+        )
+        MOCK_JOIN_ID = mock_join.generate_id()
+
+        processes.post(ExerciseJoin, mock_user, mock_join)
+
+        client = boto3.client("dynamodb")
+        print(client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"])
+
+        from_exercise = processes_module.exercise_join_filter(
+            mock_user, exercise_id=MOCK_EXERCISE_ID
+        )
+        assert len(from_exercise) == 1
+        assert from_exercise[0] == MOCK_JOIN_ID
+
+        from_workout = processes_module.exercise_join_filter(
+            mock_user, workout_id=MOCK_WORKOUT_ID
+        )
+        assert len(from_workout) == 1
+        assert from_workout[0] == MOCK_JOIN_ID
+
+        from_both = processes_module.exercise_join_filter(
+            mock_user,
+            workout_id=MOCK_WORKOUT_ID,
+            exercise_id=MOCK_EXERCISE_ID,
+        )
+        assert len(from_both) == 1
+        assert from_both[0] == MOCK_JOIN_ID
+
+    def test_invalid_params(self, mock_user):
+        with pytest.raises(
+            ValueError,
+            match="Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id`, None provided",
+        ):
+            processes_module.exercise_join_filter(mock_user)
