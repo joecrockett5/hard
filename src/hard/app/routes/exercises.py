@@ -14,12 +14,12 @@ router = APIRouter(prefix="/exercises")
 @router.get("", response_model=list[Exercise])
 async def list_exercises(
     req: Request,
-    workout_id: Optional[UUID] = None,
+    workout: Optional[UUID] = None,
 ) -> list[Exercise]:
     user = request.get_user_claims(req)
 
-    if workout_id:
-        return exercises_from_workout_id(user, workout_id)
+    if workout:
+        return exercises_from_workout_id(user, workout)
 
     return RestProcesses.get_list(Exercise, user)
 

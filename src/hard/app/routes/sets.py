@@ -14,16 +14,16 @@ router = APIRouter(prefix="/sets")
 @router.get("", response_model=list[Set])
 async def list_sets(
     req: Request,
-    workout_id: Optional[UUID] = None,
-    exercise_id: Optional[UUID] = None,
+    workout: Optional[UUID] = None,
+    exercise: Optional[UUID] = None,
 ) -> list[Set]:
     user = request.get_user_claims(req)
 
-    if workout_id or exercise_id:
+    if workout or exercise:
         return sets_from_ids(
             user,
-            workout_id=workout_id,
-            exercise_id=exercise_id,
+            workout_id=workout,
+            exercise_id=exercise,
         )
 
     return RestProcesses.get_list(Set, user)
