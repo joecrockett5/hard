@@ -19,6 +19,7 @@ from hard.aws.models.user import User
 from hard.models.exercise import Exercise
 from hard.models.exercise_join import ExerciseJoin
 from hard.models.set import Set
+from hard.models.tag import Tag
 from hard.models.tag_join import TagJoin
 
 
@@ -278,3 +279,18 @@ def tag_join_filter(
     joins = [TagJoin.from_db(item) for item in json_items]
 
     return joins
+
+
+def tags_from_target_id(user: User, /, target_id: UUID) -> list[Tag]:
+    db = get_db_instance()
+
+    joins = tag_join_filter(user, target_id=target_id)
+    tag_ids = [str(join.tag_id) for join in joins]
+
+    tags = db.batch_get(
+        user,
+        target_object_cls=Tag,
+        search_attr="object_id",
+        matches_list=tag_ids,
+    )
+    return tags
