@@ -1,14 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from starlette.requests import Request
 
 from hard.app.processes import RestProcesses
-from hard.aws.dynamodb.consts import (
-    ItemAccessUnauthorizedError,
-    ItemAlreadyExistsError,
-    ItemNotFoundError,
-)
 from hard.aws.interfaces.fastapi import request
 from hard.models.exercise import Exercise
 
@@ -16,59 +11,54 @@ router = APIRouter(prefix="/exercises")
 
 
 @router.get("", response_model=list[Exercise])
-def list_exercises(req: Request) -> list[Exercise]:
+async def list_exercises(
+    req: Request,
+) -> list[Exercise]:
     user = request.get_user_claims(req)
     return RestProcesses.get_list(Exercise, user)
 
 
 @router.get("/{exercise_id}", response_model=Exercise)
-def get_exercise(req: Request, exercise_id: str):
+async def get_exercise(
+    req: Request,
+    exercise_id: str,
+) -> Exercise:
     user = request.get_user_claims(req)
-    try:
-        exercise = RestProcesses.get(Exercise, user, UUID(exercise_id))
-    except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=str(err))
-    except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=str(err))
+    exercise = RestProcesses.get(Exercise, user, UUID(exercise_id))
 
     return exercise
 
 
 @router.post("", response_model=Exercise, status_code=201)
-def create_exercise(req: Request, exercise: Exercise):
+async def create_exercise(
+    req: Request,
+    exercise: Exercise,
+) -> Exercise:
     user = request.get_user_claims(req)
-    try:
-        created_exercise = RestProcesses.post(Exercise, user, exercise)
-    except ItemAlreadyExistsError as err:
-        raise HTTPException(status_code=409, detail=str(err))
-    except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=str(err))
+    created_exercise = RestProcesses.post(Exercise, user, exercise)
 
     return created_exercise
 
 
 @router.put("/{exercise_id}", response_model=Exercise)
-def put(req: Request, exercise_id: str, exercise: Exercise):
+async def update_exercise(
+    req: Request,
+    exercise_id: str,
+    exercise: Exercise,
+) -> Exercise:
     user = request.get_user_claims(req)
     exercise.object_id = UUID(exercise_id)
-    try:
-        updated_exercise = RestProcesses.put(Exercise, user, exercise)
-    except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=str(err))
-    except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=str(err))
+    updated_exercise = RestProcesses.put(Exercise, user, exercise)
 
     return updated_exercise
 
 
 @router.delete("/{exercise_id}", response_model=Exercise)
-def delete(req: Request, exercise_id: str):
+async def delete_exercise(
+    req: Request,
+    exercise_id: str,
+) -> Exercise:
     user = request.get_user_claims(req)
-    try:
-        deleted_exercise = RestProcesses.delete(Exercise, user, UUID(exercise_id))
-    except ItemNotFoundError as err:
-        raise HTTPException(status_code=404, detail=str(err))
-    except ItemAccessUnauthorizedError as err:
-        raise HTTPException(status_code=401, detail=str(err))
+    deleted_exercise = RestProcesses.delete(Exercise, user, UUID(exercise_id))
 
     return deleted_exercise
