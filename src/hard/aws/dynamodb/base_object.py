@@ -9,6 +9,8 @@ from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, DELIMITER
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
 
+CORE_ATTRIBUTES = ["user_id", "timestamp", "object_type", "object_id"]
+
 
 class BaseObject(BaseModel):
     """Base object for all items stored in DynamoDB"""

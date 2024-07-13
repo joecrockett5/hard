@@ -13,6 +13,7 @@ from hard.aws.dynamodb.consts import (
     DB_PARTITION,
     DB_SORT_KEY,
     DELIMITER,
+    InvalidAttributeChangeError,
     ItemAccessUnauthorizedError,
     ItemAlreadyExistsError,
     ItemNotFoundError,
@@ -272,6 +273,18 @@ class TestPut:
 
         assert object_from_db.notes == None
         assert object_from_db.__dict__ == example_object.__dict__
+
+    def test_invalid_attr_change(self, mock_user, processes, add_example_object_to_db):
+        example_object = add_example_object_to_db
+
+        updated_object = deepcopy(example_object)
+        updated_object.timestamp = datetime.fromisoformat("2024-05-06T00:00:00.000000")
+
+        with pytest.raises(
+            InvalidAttributeChangeError,
+            match=f"Cannot Modify `timestamp` Attribute on `{example_object.object_type.value}`",
+        ):
+            processes.put(BaseObject, mock_user, updated_object)
 
 
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")

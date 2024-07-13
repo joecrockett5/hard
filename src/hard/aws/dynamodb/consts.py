@@ -18,3 +18,7 @@ class ItemAlreadyExistsError(Exception):
 
 class ItemAccessUnauthorizedError(Exception):
     pass
+
+
+class InvalidAttributeChangeError(Exception):
+    pass

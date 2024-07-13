@@ -1,12 +1,13 @@
 from uuid import UUID
 
-from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE
+from hard.aws.dynamodb.base_object import CORE_ATTRIBUTES, DB_OBJECT_TYPE
 from hard.aws.dynamodb.consts import (
     DB_PARTITION,
     DB_SORT_KEY,
     ITEM_INDEX_NAME,
     ITEM_INDEX_PARTITION,
     PARTITION_TEMPLATE,
+    InvalidAttributeChangeError,
     ItemAccessUnauthorizedError,
     ItemAlreadyExistsError,
     ItemNotFoundError,
@@ -114,12 +115,18 @@ class RestProcesses:
             )
 
         try:
-            RestProcesses.get(object_cls, user, updated_object.object_id)
+            current_obj = RestProcesses.get(object_cls, user, updated_object.object_id)
 
         except ItemNotFoundError:
             raise ItemNotFoundError(
                 f"No `{ObjectType.from_object_class(object_cls).value}` found with `object_id`: '{updated_object.object_id}': Cannot Update"
             )
+
+        for attr in CORE_ATTRIBUTES:
+            if current_obj.__dict__[attr] != updated_object.__dict__[attr]:
+                raise InvalidAttributeChangeError(
+                    f"Cannot Modify `{attr}` Attribute on `{current_obj.object_type.value}`"
+                )
 
         result = db.put(data_object=updated_object)
         return result
