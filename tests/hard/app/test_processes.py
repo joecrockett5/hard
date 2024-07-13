@@ -357,13 +357,15 @@ class TestExerciseJoinFilter:
             mock_user, exercise_id=MOCK_EXERCISE_ID
         )
         assert len(from_exercise) == 1
-        assert from_exercise[0] == MOCK_JOIN_ID
+        assert isinstance(from_exercise[0], ExerciseJoin)
+        assert from_exercise[0].object_id == MOCK_JOIN_ID
 
         from_workout = processes_module.exercise_join_filter(
             mock_user, workout_id=MOCK_WORKOUT_ID
         )
         assert len(from_workout) == 1
-        assert from_workout[0] == MOCK_JOIN_ID
+        assert isinstance(from_workout[0], ExerciseJoin)
+        assert from_workout[0].object_id == MOCK_JOIN_ID
 
         from_both = processes_module.exercise_join_filter(
             mock_user,
@@ -371,7 +373,8 @@ class TestExerciseJoinFilter:
             exercise_id=MOCK_EXERCISE_ID,
         )
         assert len(from_both) == 1
-        assert from_both[0] == MOCK_JOIN_ID
+        assert isinstance(from_both[0], ExerciseJoin)
+        assert from_both[0].object_id == MOCK_JOIN_ID
 
     def test_invalid_params(self, mock_user):
         with pytest.raises(
@@ -384,8 +387,7 @@ class TestExerciseJoinFilter:
 @pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
 class TestIdsFromExerciseJoins:
 
-    @pytest.mark.dependency(depends=["CREATE"])
-    def test_successful_conversion(self, mock_user, processes):
+    def test_successful_conversion(self, mock_user):
         MOCK_EXERCISE_ID = uuid4()
         MOCK_WORKOUT_ID = uuid4()
 
@@ -397,11 +399,9 @@ class TestIdsFromExerciseJoins:
                 "exercise_id": MOCK_EXERCISE_ID,
             }
         )
-        MOCK_JOIN_ID = mock_join.generate_id()
+        mock_join.generate_id()
 
-        processes.post(ExerciseJoin, mock_user, mock_join)
-
-        ids_dict = processes_module.ids_from_exercise_joins(mock_user, [MOCK_JOIN_ID])
+        ids_dict = processes_module.ids_from_exercise_joins([mock_join])
 
         assert len(ids_dict["exercise_ids"]) == 1
         assert ids_dict["exercise_ids"][0] == MOCK_EXERCISE_ID

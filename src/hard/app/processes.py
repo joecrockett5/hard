@@ -16,7 +16,9 @@ from hard.aws.dynamodb.consts import (
 from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
+from hard.models.exercise import Exercise
 from hard.models.exercise_join import ExerciseJoin
+from hard.models.set import Set
 from hard.models.tag_join import TagJoin
 
 
@@ -163,7 +165,7 @@ def exercise_join_filter(
     /,
     exercise_id: Optional[UUID] = None,
     workout_id: Optional[UUID] = None,
-) -> list[UUID]:
+) -> list[ExerciseJoin]:
     if not (exercise_id or workout_id):
         raise ValueError(
             "Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id` or both, None provided"
@@ -191,27 +193,10 @@ def exercise_join_filter(
     )
     joins = [ExerciseJoin.from_db(item) for item in json_items]
 
-    ids = []
-    for join in joins:
-        if join.object_id is None:
-            raise ValueError("Found `ExerciseJoin` with NULL `object_id`")
-
-        ids.append(join.object_id)
-
-    return ids
+    return joins
 
 
-def ids_from_exercise_joins(user: User, join_ids: list[UUID]) -> dict[str, list[UUID]]:
-    db = get_db_instance()
-
-    str_join_ids = [str(id) for id in join_ids]
-    joins = db.batch_get(
-        user=user,
-        target_object_cls=ExerciseJoin,
-        search_attr="object_id",
-        matches_list=str_join_ids,
-    )
-
+def ids_from_exercise_joins(joins: list[ExerciseJoin]) -> dict[str, list[UUID]]:
     out_dict = {
         "exercise_ids": [],
         "workout_ids": [],
@@ -222,6 +207,42 @@ def ids_from_exercise_joins(user: User, join_ids: list[UUID]) -> dict[str, list[
         out_dict["workout_ids"].append(join.workout_id)
 
     return out_dict
+
+
+def exercises_from_workout_id(user: User, workout_id: UUID) -> list[Exercise]:
+    db = get_db_instance()
+
+    joins = exercise_join_filter(user, workout_id=workout_id)
+    ids = ids_from_exercise_joins(joins)
+
+    exercises = db.batch_get(
+        user,
+        target_object_cls=Exercise,
+        search_attr="object_id",
+        matches_list=[str(id) for id in ids["exercise_ids"]],
+    )
+    return exercises
+
+
+def sets_from_ids(
+    user: User, /, workout_id: Optional[UUID] = None, exercise_id: Optional[UUID] = None
+) -> list[Set]:
+    db = get_db_instance()
+
+    joins = exercise_join_filter(
+        user,
+        workout_id=workout_id,
+        exercise_id=exercise_id,
+    )
+    join_ids = [str(join.object_id) for join in joins]
+
+    sets = db.batch_get(
+        user,
+        target_object_cls=Set,
+        search_attr="exercise_join_id",
+        matches_list=join_ids,
+    )
+    return sets
 
 
 def tag_join_filter(

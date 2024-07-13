@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -13,7 +14,11 @@ router = APIRouter(prefix="/exercises")
 @router.get("", response_model=list[Exercise])
 async def list_exercises(
     req: Request,
+    workout_id: Optional[UUID] = None,
 ) -> list[Exercise]:
+    if workout_id:
+        pass
+
     user = request.get_user_claims(req)
     return RestProcesses.get_list(Exercise, user)
 
