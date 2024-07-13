@@ -7,7 +7,7 @@ from hard.app.processes import RestProcesses
 from hard.aws.interfaces.fastapi import request
 from hard.models.exercise_join import ExerciseJoin
 
-router = APIRouter(prefix="/exercise_joins")
+router = APIRouter(prefix="/exercise-joins")
 
 
 @router.get("", response_model=list[ExerciseJoin])

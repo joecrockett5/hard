@@ -7,7 +7,7 @@ from hard.app.processes import RestProcesses
 from hard.aws.interfaces.fastapi import request
 from hard.models.tag_join import TagJoin
 
-router = APIRouter(prefix="/tag_joins")
+router = APIRouter(prefix="/tag-joins")
 
 
 @router.get("", response_model=list[TagJoin])
