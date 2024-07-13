@@ -17,6 +17,7 @@ from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
 from hard.models.exercise_join import ExerciseJoin
+from hard.models.tag_join import TagJoin
 
 
 class RestProcesses:
@@ -165,7 +166,7 @@ def exercise_join_filter(
 ) -> list[UUID]:
     if not (exercise_id or workout_id):
         raise ValueError(
-            "Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id`, None provided"
+            "Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id` or both, None provided"
         )
 
     db = get_db_instance()
@@ -194,6 +195,71 @@ def exercise_join_filter(
     for join in joins:
         if join.object_id is None:
             raise ValueError("Found `ExerciseJoin` with NULL `object_id`")
+
+        ids.append(join.object_id)
+
+    return ids
+
+
+def ids_from_exercise_joins(user: User, join_ids: list[UUID]) -> dict[str, list[UUID]]:
+    db = get_db_instance()
+
+    str_join_ids = [str(id) for id in join_ids]
+    joins = db.batch_get(
+        user=user,
+        target_object_cls=ExerciseJoin,
+        search_attr="object_id",
+        matches_list=str_join_ids,
+    )
+
+    out_dict = {
+        "exercise_ids": [],
+        "workout_ids": [],
+    }
+
+    for join in joins:
+        out_dict["exercise_ids"].append(join.exercise_id)
+        out_dict["workout_ids"].append(join.workout_id)
+
+    return out_dict
+
+
+def tag_join_filter(
+    user: User,
+    /,
+    tag_id: Optional[UUID] = None,
+    target_id: Optional[UUID] = None,
+) -> list[UUID]:
+    if bool(tag_id) == bool(target_id):
+        raise ValueError(
+            "Invalid Usage: `tag_join_filter` requires either `tag_id` or `target_id`"
+        )
+
+    db = get_db_instance()
+
+    partition = PARTITION_TEMPLATE.format(
+        **{
+            "user_id": user.id,
+            "object_type": ObjectType.TAG_JOIN.value,
+        }
+    )
+
+    filter = None
+    if tag_id:
+        filter = Attr("tag_id").eq(str(tag_id))
+    if target_id:
+        filter = Attr("target_id").eq(str(target_id))
+
+    json_items = db.query(
+        key_expression=Key(DB_PARTITION).eq(partition),
+        filter_expression=filter,
+    )
+    joins = [TagJoin.from_db(item) for item in json_items]
+
+    ids = []
+    for join in joins:
+        if join.object_id is None:
+            raise ValueError("Found `TagJoin` with NULL `object_id`")
 
         ids.append(join.object_id)
 

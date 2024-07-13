@@ -352,9 +352,6 @@ class TestExerciseJoinFilter:
 
         processes.post(ExerciseJoin, mock_user, mock_join)
 
-        client = boto3.client("dynamodb")
-        print(client.scan(TableName=MOCK_DYNAMO_TABLE_NAME)["Items"])
-
         from_exercise = processes_module.exercise_join_filter(
             mock_user, exercise_id=MOCK_EXERCISE_ID
         )
@@ -378,6 +375,35 @@ class TestExerciseJoinFilter:
     def test_invalid_params(self, mock_user):
         with pytest.raises(
             ValueError,
-            match="Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id`, None provided",
+            match="Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id` or both, None provided",
         ):
             processes_module.exercise_join_filter(mock_user)
+
+
+@pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+class TestIdsFromExerciseJoins:
+
+    @pytest.mark.dependency(depends=["CREATE"])
+    def test_successful_conversion(self, mock_user, processes):
+        MOCK_EXERCISE_ID = uuid4()
+        MOCK_WORKOUT_ID = uuid4()
+
+        mock_join = ExerciseJoin.model_validate(
+            {
+                "user_id": MOCK_USER_ID,
+                "timestamp": "2024-07-06T00:00:00.000000",
+                "workout_id": MOCK_WORKOUT_ID,
+                "exercise_id": MOCK_EXERCISE_ID,
+            }
+        )
+        MOCK_JOIN_ID = mock_join.generate_id()
+
+        processes.post(ExerciseJoin, mock_user, mock_join)
+
+        ids_dict = processes_module.ids_from_exercise_joins(mock_user, [MOCK_JOIN_ID])
+
+        assert len(ids_dict["exercise_ids"]) == 1
+        assert ids_dict["exercise_ids"][0] == MOCK_EXERCISE_ID
+
+        assert len(ids_dict["workout_ids"]) == 1
+        assert ids_dict["workout_ids"][0] == MOCK_WORKOUT_ID
