@@ -20,6 +20,7 @@ from hard.aws.dynamodb.consts import (
 )
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.models.exercise_join import ExerciseJoin
+from hard.models.tag_join import TagJoin
 from hard.models.workout import Workout
 
 from ...conftest import MOCK_DYNAMO_TABLE_NAME, MOCK_USER_ID
@@ -407,3 +408,52 @@ class TestIdsFromExerciseJoins:
 
         assert len(ids_dict["workout_ids"]) == 1
         assert ids_dict["workout_ids"][0] == MOCK_WORKOUT_ID
+
+
+@pytest.mark.usefixtures("env_vars", "set_up_aws_resources")
+class TestTagJoinFilter:
+
+    @pytest.mark.dependency(depends=["CREATE"])
+    def test_successful_retrieval(self, mock_user, processes):
+        MOCK_TAG_ID = uuid4()
+        MOCK_TARGET_ID = uuid4()
+
+        mock_join = TagJoin.model_validate(
+            {
+                "user_id": MOCK_USER_ID,
+                "timestamp": "2024-07-06T00:00:00.000000",
+                "target_id": MOCK_TARGET_ID,
+                "target_object_type": ObjectType.WORKOUT.value,
+                "tag_id": MOCK_TAG_ID,
+            }
+        )
+        MOCK_JOIN_ID = mock_join.generate_id()
+
+        processes.post(TagJoin, mock_user, mock_join)
+
+        from_tag = processes_module.tag_join_filter(mock_user, tag_id=MOCK_TAG_ID)
+        assert len(from_tag) == 1
+        assert from_tag[0] == MOCK_JOIN_ID
+
+        from_target = processes_module.tag_join_filter(
+            mock_user, target_id=MOCK_TARGET_ID
+        )
+        assert len(from_target) == 1
+        assert from_target[0] == MOCK_JOIN_ID
+
+    def test_invalid_params(self, mock_user):
+        with pytest.raises(
+            ValueError,
+            match="Invalid Usage: `tag_join_filter` requires either `tag_id` or `target_id`",
+        ):
+            processes_module.tag_join_filter(mock_user)
+
+        with pytest.raises(
+            ValueError,
+            match="Invalid Usage: `tag_join_filter` requires either `tag_id` or `target_id`",
+        ):
+            processes_module.tag_join_filter(
+                mock_user,
+                tag_id=uuid4(),
+                target_id=uuid4(),
+            )
