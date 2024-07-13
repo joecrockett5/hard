@@ -1,3 +1,4 @@
+from typing import Type
 from uuid import UUID
 
 from hard.aws.dynamodb.base_object import CORE_ATTRIBUTES, DB_OBJECT_TYPE
@@ -21,7 +22,7 @@ class RestProcesses:
 
     @staticmethod
     def get_list(
-        object_cls: DB_OBJECT_TYPE,
+        object_cls: Type[DB_OBJECT_TYPE],
         user: User,
     ) -> list[DB_OBJECT_TYPE]:
         db = get_db_instance()
@@ -42,7 +43,7 @@ class RestProcesses:
 
     @staticmethod
     def get(
-        object_cls: DB_OBJECT_TYPE,
+        object_cls: Type[DB_OBJECT_TYPE],
         user: User,
         object_id: UUID,
     ) -> DB_OBJECT_TYPE:
@@ -72,7 +73,7 @@ class RestProcesses:
 
     @staticmethod
     def post(
-        object_cls: DB_OBJECT_TYPE,
+        object_cls: Type[DB_OBJECT_TYPE],
         user: User,
         data_object: DB_OBJECT_TYPE,
     ) -> DB_OBJECT_TYPE:
@@ -98,7 +99,7 @@ class RestProcesses:
 
     @staticmethod
     def put(
-        object_cls: DB_OBJECT_TYPE,
+        object_cls: Type[DB_OBJECT_TYPE],
         user: User,
         updated_object: DB_OBJECT_TYPE,
     ) -> DB_OBJECT_TYPE:
@@ -133,7 +134,7 @@ class RestProcesses:
 
     @staticmethod
     def delete(
-        object_cls: DB_OBJECT_TYPE,
+        object_cls: Type[DB_OBJECT_TYPE],
         user: User,
         object_id: UUID,
     ) -> DB_OBJECT_TYPE:
