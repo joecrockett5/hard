@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Optional, Type
 from uuid import UUID
 
 from hard.aws.dynamodb.base_object import CORE_ATTRIBUTES, DB_OBJECT_TYPE
@@ -16,6 +16,7 @@ from hard.aws.dynamodb.consts import (
 from hard.aws.dynamodb.handler import Attr, Key, get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
 from hard.aws.models.user import User
+from hard.models.exercise_join import ExerciseJoin
 
 
 class RestProcesses:
@@ -154,3 +155,46 @@ class RestProcesses:
             )
 
         return db.delete(to_delete)
+
+
+def exercise_join_filter(
+    user: User,
+    /,
+    exercise_id: Optional[UUID] = None,
+    workout_id: Optional[UUID] = None,
+) -> list[UUID]:
+    if not (exercise_id or workout_id):
+        raise ValueError(
+            "Invalid Usage: `exercise_join_filter` requires either `exercise_id` or `workout_id`, None provided"
+        )
+
+    db = get_db_instance()
+
+    partition = PARTITION_TEMPLATE.format(
+        **{
+            "user_id": user.id,
+            "object_type": ObjectType.EXCERCISE_JOIN,
+        }
+    )
+
+    filter = None
+    if exercise_id:
+        filter = Attr("exercise_id").eq(str(exercise_id))
+    if workout_id:
+        workout_filter = Attr("workout_id").eq(workout_id)
+        filter = filter & workout_filter if filter else workout_filter
+
+    json_items = db.query(
+        key_expression=Key(DB_PARTITION).eq(partition),
+        filter_expression=filter,
+    )
+    joins = [ExerciseJoin.from_db(item) for item in json_items]
+
+    ids = []
+    for join in joins:
+        if join.object_id is None:
+            raise ValueError("Found `ExerciseJoin` with NULL `object_id`")
+
+        ids.append(join.object_id)
+
+    return ids

@@ -1,5 +1,6 @@
 import os
 from typing import Optional
+from uuid import UUID
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
@@ -42,7 +43,8 @@ class DynamoDB:
         response = self._table.query(**kwargs)
         return response["Items"]
 
-    def batch_get(self, /, user: User, object_cls, object_ids: list):
+    def batch_get(self, /, user: User, object_cls, object_ids: list[UUID]):
+        str_ids = [str(id) for id in object_ids]
         partition = PARTITION_TEMPLATE.format(
             **{
                 "user_id": user.id,
@@ -51,7 +53,7 @@ class DynamoDB:
         )
         items = self.query(
             key_expression=Key(DB_PARTITION).eq(partition),
-            filter_expression=Attr("object_id").is_in(object_ids),
+            filter_expression=Attr("object_id").is_in(str_ids),
         )
         return items
 
