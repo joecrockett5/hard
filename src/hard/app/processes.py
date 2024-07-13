@@ -250,7 +250,7 @@ def tag_join_filter(
     /,
     tag_id: Optional[UUID] = None,
     target_id: Optional[UUID] = None,
-) -> list[UUID]:
+) -> list[TagJoin]:
     if bool(tag_id) == bool(target_id):
         raise ValueError(
             "Invalid Usage: `tag_join_filter` requires either `tag_id` or `target_id`"
@@ -277,11 +277,4 @@ def tag_join_filter(
     )
     joins = [TagJoin.from_db(item) for item in json_items]
 
-    ids = []
-    for join in joins:
-        if join.object_id is None:
-            raise ValueError("Found `TagJoin` with NULL `object_id`")
-
-        ids.append(join.object_id)
-
-    return ids
+    return joins

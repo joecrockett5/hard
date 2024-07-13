@@ -433,13 +433,15 @@ class TestTagJoinFilter:
 
         from_tag = processes_module.tag_join_filter(mock_user, tag_id=MOCK_TAG_ID)
         assert len(from_tag) == 1
-        assert from_tag[0] == MOCK_JOIN_ID
+        assert isinstance(from_tag[0], TagJoin)
+        assert from_tag[0].object_id == MOCK_JOIN_ID
 
         from_target = processes_module.tag_join_filter(
             mock_user, target_id=MOCK_TARGET_ID
         )
         assert len(from_target) == 1
-        assert from_target[0] == MOCK_JOIN_ID
+        assert isinstance(from_target[0], TagJoin)
+        assert from_target[0].object_id == MOCK_JOIN_ID
 
     def test_invalid_params(self, mock_user):
         with pytest.raises(
