@@ -1,9 +1,10 @@
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter
 from starlette.requests import Request
 
-from hard.app.processes import RestProcesses
+from hard.app.processes import RestProcesses, tags_from_target_id
 from hard.aws.interfaces.fastapi import request
 from hard.models.tag import Tag
 
@@ -11,10 +12,12 @@ router = APIRouter(prefix="/tags")
 
 
 @router.get("", response_model=list[Tag])
-async def list_tags(
-    req: Request,
-) -> list[Tag]:
+async def list_tags(req: Request, target: Optional[UUID] = None) -> list[Tag]:
     user = request.get_user_claims(req)
+
+    if target:
+        return tags_from_target_id(user, target_id=target)
+
     return RestProcesses.get_list(Tag, user)
 
 
