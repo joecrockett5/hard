@@ -5,7 +5,9 @@ import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
 from hard.aws.dynamodb.base_object import DB_OBJECT_TYPE
-from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY
+from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, PARTITION_TEMPLATE
+from hard.aws.dynamodb.object_type import ObjectType
+from hard.aws.models.user import User
 
 
 class DynamoDB:
@@ -39,6 +41,19 @@ class DynamoDB:
 
         response = self._table.query(**kwargs)
         return response["Items"]
+
+    def batch_get(self, /, user: User, object_cls, object_ids: list):
+        partition = PARTITION_TEMPLATE.format(
+            **{
+                "user_id": user.id,
+                "object_type": ObjectType.from_object_class(object_cls).value,
+            }
+        )
+        items = self.query(
+            key_expression=Key(DB_PARTITION).eq(partition),
+            filter_expression=Attr("object_id").is_in(object_ids),
+        )
+        return items
 
     def put(self, /, data_object: DB_OBJECT_TYPE) -> DB_OBJECT_TYPE:
         """
