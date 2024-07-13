@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Type
 from uuid import UUID
 
 import boto3
@@ -43,19 +43,31 @@ class DynamoDB:
         response = self._table.query(**kwargs)
         return response["Items"]
 
-    def batch_get(self, /, user: User, object_cls, object_ids: list[UUID]):
-        str_ids = [str(id) for id in object_ids]
+    def batch_get(
+        self,
+        /,
+        user: User,
+        target_object_cls: Type[DB_OBJECT_TYPE],
+        search_attr: str,
+        matches_list: list[str],
+    ) -> list[DB_OBJECT_TYPE]:
+        if search_attr not in target_object_cls.model_fields.keys():
+            raise ValueError(
+                f"Invalid `search_attr` ('{search_attr}') for target class `{ObjectType.from_object_class(target_object_cls).value}`"
+            )
+
         partition = PARTITION_TEMPLATE.format(
             **{
                 "user_id": user.id,
-                "object_type": ObjectType.from_object_class(object_cls).value,
+                "object_type": ObjectType.from_object_class(target_object_cls).value,
             }
         )
-        items = self.query(
+        json_items = self.query(
             key_expression=Key(DB_PARTITION).eq(partition),
-            filter_expression=Attr("object_id").is_in(str_ids),
+            filter_expression=Attr(search_attr).is_in(matches_list),
         )
-        return items
+        objects = [target_object_cls.from_db(item) for item in json_items]
+        return objects
 
     def put(self, /, data_object: DB_OBJECT_TYPE) -> DB_OBJECT_TYPE:
         """
