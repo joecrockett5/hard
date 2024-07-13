@@ -1,10 +1,10 @@
-from uuid import UUID
-from pydantic import BaseModel
+from typing import Optional
 
-from hard.models.set import Set
+from hard.aws.dynamodb.base_object import BaseObject
+from hard.aws.dynamodb.object_type import ObjectType
 
 
-class Exercise(BaseModel):
-    id: UUID
-    template_id: UUID
-    sets: list[Set]
+class Exercise(BaseObject):
+    object_type: ObjectType = ObjectType.EXERCISE
+    name: str
+    image: Optional[str] = None

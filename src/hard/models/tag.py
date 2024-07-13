@@ -1,12 +1,11 @@
-from uuid import UUID
-from pydantic import BaseModel
+from hard.aws.dynamodb.base_object import BaseObject
+from hard.aws.dynamodb.object_type import ObjectType
 
 
-class Tag(BaseModel):
-    id: UUID
-    user_id: str
+class Tag(BaseObject):
+    object_type: ObjectType = ObjectType.TAG
     name: str
     color_hex: str
-    for_sets: bool = False
-    for_exercises: bool = False
-    for_workouts: bool = False
+    for_sets: bool = True
+    for_exercises: bool = True
+    for_workouts: bool = True

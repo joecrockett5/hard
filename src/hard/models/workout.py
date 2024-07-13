@@ -1,15 +1,22 @@
-from uuid import UUID
-from pydantic import BaseModel
 from datetime import date
+from typing import Optional
 
-from hard.models.tag import Tag
-from hard.models.exercise import Exercise
+from pydantic import field_serializer, field_validator
+
+from hard.aws.dynamodb.base_object import BaseObject
+from hard.aws.dynamodb.object_type import ObjectType
 
 
-class Workout(BaseModel):
-    id: UUID
-    user_id: str
-    tags: list[Tag]
-    date: date
-    exercises: list[Exercise]
-    notes: str
+class Workout(BaseObject):
+    object_type: ObjectType = ObjectType.WORKOUT
+    workout_date: date
+    notes: Optional[str] = None
+
+    @field_serializer("workout_date")
+    def to_isoformat(self, workout_date: date) -> str:
+        return workout_date.isoformat()
+
+    @field_validator("workout_date", mode="before")
+    @classmethod
+    def from_isoformat(cls, date_str: str) -> date:
+        return date.fromisoformat(date_str)

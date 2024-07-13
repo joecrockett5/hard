@@ -3,3 +3,7 @@
 .serverless
 
 *.egg-info
+__pycache__
+.wheels/
+utils.sh
+.coverage

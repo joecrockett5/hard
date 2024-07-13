@@ -9,7 +9,6 @@ provider:
   stage: dev
   region: eu-west-2
 
-
   iam:
     role:
       statements:
@@ -33,21 +32,30 @@ provider:
             - "dynamodb:UpdateItem"
             - "dynamodb:DeleteItem"
             - "dynamodb:BatchWriteItem"
-          Resource: !GetAtt hardResourcesTable.Arn
+          Resource:
+            - !GetAtt hardResourcesTable.Arn
+            - Fn::Join:
+                - "/"
+                - - !GetAtt hardResourcesTable.Arn
+                  - "index"
+                  - "ItemSearch"
 
 functions:
   hard-api:
-    handler: PUT.HANDLER.HERE
+    handler: src.hard.app.main.handler
     layers:
       - Ref: PythonRequirementsLambdaLayer
     events:
       - http:
           path: /{endpoints+}
           method: ANY
-          authorizer: 
+          authorizer:
             name: CognitoAuth
             type: COGNITO_USER_POOLS
             arn: !GetAtt hardUserPool.Arn
+    environment:
+      DYNAMO_TABLE_NAME: hardResources
+      DYNAMO_ITEM_INDEX_NAME: ItemSearch
 
 plugins:
   - serverless-python-requirements
@@ -56,11 +64,14 @@ custom:
   pythonRequirements:
     name: ${self.provider.stage}-hard-api
     invalidateCaches: true
+    useDownloadCache: false
+    useStaticCache: false
     layer: true
-    slim: true
-    slimPatternsAppendDefaults: true
-    filename:
-      lambda-requirements.txt
+    fileName: lambda-requirements.txt
+    pipCmdExtraArgs:
+      - --find-links .wheels/
+      - --platform manylinux2014_x86_64
+      - "--only-binary=:all:"
 
 resources:
   Resources:
@@ -75,13 +86,24 @@ resources:
             AttributeType: S
           - AttributeName: "Timestamp"
             AttributeType: S
+          - AttributeName: "object_id"
+            AttributeType: S
 
         KeySchema:
           - AttributeName: "User_ObjectType"
             KeyType: "HASH"
           - AttributeName: "Timestamp"
             KeyType: "RANGE"
-    
+
+        GlobalSecondaryIndexes:
+          - IndexName: ItemSearch
+
+            KeySchema:
+              - AttributeName: "object_id"
+                KeyType: "HASH"
+
+            Projection:
+              ProjectionType: ALL
 
     hardUserPool:
       Type: AWS::Cognito::UserPool
@@ -90,4 +112,3 @@ resources:
         MfaConfiguration: OFF
         UsernameAttributes:
           - email
-        
