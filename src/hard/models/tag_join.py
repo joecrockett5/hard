@@ -22,6 +22,7 @@ class TagJoin(BaseObject):
     def tag_id_to_str(self, tag_id: UUID) -> str:
         return str(tag_id)
 
+    # target_object_type handler
     @field_serializer("target_object_type")
     def target_object_type_to_str(self, target_object_type: ObjectType) -> str:
         return target_object_type.value
