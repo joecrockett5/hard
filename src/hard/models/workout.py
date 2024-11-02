@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Optional
 
 from pydantic import field_serializer, field_validator
 
@@ -10,7 +9,8 @@ from hard.aws.dynamodb.object_type import ObjectType
 class Workout(BaseObject):
     object_type: ObjectType = ObjectType.WORKOUT
     workout_date: date
-    notes: Optional[str] = None
+    notes: str
+    title: str
 
     @field_serializer("workout_date")
     def to_isoformat(self, workout_date: date) -> str:

@@ -2,15 +2,16 @@ from pydantic import field_serializer, field_validator
 
 from hard.aws.dynamodb.base_object import BaseObject
 from hard.aws.dynamodb.object_type import ObjectType
-from hard.models import WeightUnit
+from hard.models import SetType, WeightUnit
 
 
 class Set(BaseObject):
     object_type: ObjectType = ObjectType.SET
-    notes: str
-    reps: int
+    set_type: SetType
     weight: float
     unit: WeightUnit
+    reps: float
+    notes: str
     exercise_join_id: str
 
     @field_validator("unit")

@@ -84,23 +84,22 @@ class RestProcesses:
     ) -> DB_OBJECT_TYPE:
         db = get_db_instance()
 
-        object_id = data_object.object_id or data_object.generate_id()
+        if data_object.object_id:
 
-        try:
-            RestProcesses.get(object_cls, user, object_id)
+            try:
+                RestProcesses.get(object_cls, user, data_object.object_id)
 
-        except ItemNotFoundError:
-            if not data_object.owned_by(user):
-                raise ItemAccessUnauthorizedError(
-                    f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Create"
+            except ItemNotFoundError:
+                pass
+
+            else:
+                raise ItemAlreadyExistsError(
+                    f"Found `{ObjectType.from_object_class(object_cls).value}` with `object_id`: '{data_object.object_id}': Cannot Create"
                 )
-            result = db.put(data_object=data_object)
-            return result
 
-        else:
-            raise ItemAlreadyExistsError(
-                f"Found `{ObjectType.from_object_class(object_cls).value}` with `object_id`: '{data_object.object_id}': Cannot Create"
-            )
+        data_object.init_from_request(user, ObjectType.from_object_class(object_cls))
+        result = db.put(data_object=data_object)
+        return result
 
     @staticmethod
     def put(
@@ -109,11 +108,7 @@ class RestProcesses:
         updated_object: DB_OBJECT_TYPE,
     ) -> DB_OBJECT_TYPE:
         db = get_db_instance()
-
-        if not updated_object.owned_by(user):
-            raise ItemAccessUnauthorizedError(
-                f"`{ObjectType.from_object_class(object_cls).value}` Item not owned by current user ({user.id}): Cannot Update"
-            )
+        updated_object.from_request(user, ObjectType.from_object_class(object_cls))
 
         if not updated_object.object_id:
             raise ReferenceError(

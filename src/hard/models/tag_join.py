@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from pydantic import field_serializer
+from pydantic import field_serializer, field_validator
 
 from hard.aws.dynamodb.base_object import BaseObject
+from hard.aws.dynamodb.handler import get_db_instance
 from hard.aws.dynamodb.object_type import ObjectType
 
 
@@ -26,3 +27,7 @@ class TagJoin(BaseObject):
     @field_serializer("target_object_type")
     def target_object_type_to_str(self, target_object_type: ObjectType) -> str:
         return target_object_type.value
+
+    def get_target_object_type_from_db() -> ObjectType:
+        # TODO: For now, will just deal with passing the value through
+        pass
