@@ -7,3 +7,7 @@ __pycache__
 .wheels/
 utils.sh
 .coverage
+
+node_modules
+package-lock.json
+package.json

@@ -1,9 +1,11 @@
+from datetime import date
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter
 from starlette.requests import Request
 
-from hard.app.processes import RestProcesses
+from hard.app.processes import RestProcesses, workout_date_filter
 from hard.aws.interfaces.fastapi import request
 from hard.models.workout import Workout
 
@@ -13,8 +15,13 @@ router = APIRouter(prefix="/workouts")
 @router.get("", response_model=list[Workout])
 async def list_workouts(
     req: Request,
+    date: Optional[date] = None,
 ) -> list[Workout]:
     user = request.get_user_claims(req)
+
+    if date:
+        return workout_date_filter(user, date)
+
     return RestProcesses.get_list(Workout, user)
 
 

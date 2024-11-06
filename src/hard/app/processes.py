@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional, Type
 from uuid import UUID
 
@@ -21,6 +22,7 @@ from hard.models.exercise_join import ExerciseJoin
 from hard.models.set import Set
 from hard.models.tag import Tag
 from hard.models.tag_join import TagJoin
+from hard.models.workout import Workout
 
 
 class RestProcesses:
@@ -154,6 +156,30 @@ class RestProcesses:
             )
 
         return db.delete(to_delete)
+
+
+def workout_date_filter(
+    user: User,
+    requested_date: date,
+) -> list[Workout]:
+    db = get_db_instance()
+
+    partition = PARTITION_TEMPLATE.format(
+        **{
+            "user_id": user.id,
+            "object_type": ObjectType.WORKOUT.value,
+        }
+    )
+
+    filter = Attr("workout_date").eq(requested_date.isoformat())
+
+    json_items = db.query(
+        key_expression=Key(DB_PARTITION).eq(partition),
+        filter_expression=filter,
+    )
+    workouts = [Workout.from_db(item) for item in json_items]
+
+    return workouts
 
 
 def exercise_join_filter(
