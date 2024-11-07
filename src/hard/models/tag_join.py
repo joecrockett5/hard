@@ -26,7 +26,11 @@ class TagJoin(BaseObject):
 
     # target_object_type handler
     @field_serializer("target_object_type")
-    def target_object_type_to_str(self, target_object_type: ObjectType) -> str:
+    def target_object_type_to_str(
+        self, target_object_type: Optional[ObjectType]
+    ) -> Optional[str]:
+        if target_object_type == None:
+            return None
         return target_object_type.value
 
     def get_target_object_type_from_db() -> ObjectType:
