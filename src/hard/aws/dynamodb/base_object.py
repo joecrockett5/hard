@@ -3,7 +3,7 @@ from typing import Optional, TypeVar
 from uuid import UUID, uuid4
 
 from dateutil import parser as date_parser
-from pydantic import BaseModel, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from hard.aws.dynamodb.consts import DB_PARTITION, DB_SORT_KEY, DELIMITER
 from hard.aws.dynamodb.object_type import ObjectType
@@ -15,10 +15,10 @@ CORE_ATTRIBUTES = ["user_id", "timestamp", "object_type", "object_id"]
 class BaseObject(BaseModel):
     """Base object for all items stored in DynamoDB"""
 
-    user_id: Optional[str]
-    timestamp: Optional[datetime]
-    object_type: Optional[ObjectType]
-    object_id: Optional[UUID] = None
+    user_id: Optional[str] = Field(default=None)
+    timestamp: Optional[datetime] = Field(default=None)
+    object_type: Optional[ObjectType] = Field(default=None)
+    object_id: Optional[UUID] = Field(default=None)
 
     # `created` handling
     @field_validator("timestamp", mode="before")

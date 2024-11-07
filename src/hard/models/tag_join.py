@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator
 
 from hard.aws.dynamodb.base_object import BaseObject
 from hard.aws.dynamodb.handler import get_db_instance
@@ -12,7 +12,7 @@ class TagJoin(BaseObject):
     object_type: ObjectType = ObjectType.TAG_JOIN
     target_id: UUID
     tag_id: UUID
-    target_object_type: Optional[ObjectType] = None
+    target_object_type: Optional[ObjectType] = Field(default=None)
 
     # target_id handler
     @field_serializer("target_id")
