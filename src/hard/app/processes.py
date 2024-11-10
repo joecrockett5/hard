@@ -308,6 +308,9 @@ def tags_from_target_id(user: User, /, target_id: UUID) -> list[Tag]:
     joins = tag_join_filter(user, target_id=target_id)
     tag_ids = [str(join.tag_id) for join in joins]
 
+    if not tag_ids:
+        return []
+
     tags = db.batch_get(
         user,
         target_object_cls=Tag,
