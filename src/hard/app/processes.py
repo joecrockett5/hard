@@ -236,12 +236,16 @@ def exercises_from_workout_id(user: User, workout_id: UUID) -> list[Exercise]:
 
     joins = exercise_join_filter(user, workout_id=workout_id)
     ids = ids_from_exercise_joins(joins)
+    exercise_ids = [str(id) for id in ids["exercise_ids"]]
+
+    if not exercise_ids:
+        return []
 
     exercises = db.batch_get(
         user,
         target_object_cls=Exercise,
         search_attr="object_id",
-        matches_list=[str(id) for id in ids["exercise_ids"]],
+        matches_list=exercise_ids,
     )
     return exercises
 

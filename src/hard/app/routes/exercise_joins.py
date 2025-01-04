@@ -1,9 +1,10 @@
+from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
-from hard.app.processes import RestProcesses
+from hard.app.processes import RestProcesses, exercise_join_filter
 from hard.aws.interfaces.fastapi import request
 from hard.models.exercise_join import ExerciseJoin
 
@@ -13,9 +14,20 @@ router = APIRouter(prefix="/exercise-joins")
 @router.get("", response_model=list[ExerciseJoin])
 async def list_exercise_joins(
     req: Request,
-) -> list[ExerciseJoin]:
+    exercise_id: Optional[UUID] = None,
+    workout_id: Optional[UUID] = None,
+) -> list[ExerciseJoin] | ExerciseJoin:
     user = request.get_user_claims(req)
-    return RestProcesses.get_list(ExerciseJoin, user)
+    if exercise_id or workout_id:
+        relevant_joins = exercise_join_filter(user, exercise_id, workout_id)
+        if len(relevant_joins) == 0:
+            raise HTTPException(status_code=404, detail="No joins found")
+        elif len(relevant_joins) == 1:
+            return relevant_joins[0]
+        else:
+            return relevant_joins
+    else:
+        return RestProcesses.get_list(ExerciseJoin, user)
 
 
 @router.get("/{exercise_join_id}", response_model=ExerciseJoin)
@@ -64,3 +76,23 @@ async def delete_exercise_join(
     )
 
     return deleted_exercise_join
+
+
+@router.delete("", response_model=ExerciseJoin)
+async def delete_exercise_join_from_ids(
+    req: Request,
+    exercise_id: UUID,
+    workout_id: UUID,
+) -> ExerciseJoin:
+    user = request.get_user_claims(req)
+    relevant_joins = exercise_join_filter(user, exercise_id, workout_id)
+    if len(relevant_joins) == 0:
+        raise HTTPException(status_code=404, detail="No joins found")
+    elif len(relevant_joins) > 1:
+        raise HTTPException(status_code=409, detail="Multiple joins found")
+    else:
+        to_delete = relevant_joins[0]
+        deleted_exercise_join = RestProcesses.delete(
+            ExerciseJoin, user, to_delete.object_id
+        )
+        return deleted_exercise_join
