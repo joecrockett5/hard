@@ -14,16 +14,15 @@ router = APIRouter(prefix="/exercise-joins")
 @router.get("", response_model=list[ExerciseJoin])
 async def list_exercise_joins(
     req: Request,
-    exercise_id: Optional[UUID] = None,
-    workout_id: Optional[UUID] = None,
+    exercise: Optional[UUID] = None,
+    workout: Optional[UUID] = None,
 ) -> list[ExerciseJoin] | ExerciseJoin:
     user = request.get_user_claims(req)
-    if exercise_id or workout_id:
-        relevant_joins = exercise_join_filter(user, exercise_id, workout_id)
+    if exercise or workout:
+        relevant_joins = exercise_join_filter(user, exercise, workout)
         if len(relevant_joins) == 0:
             raise HTTPException(status_code=404, detail="No joins found")
-        elif len(relevant_joins) == 1:
-            return relevant_joins[0]
+
         else:
             return relevant_joins
     else:
