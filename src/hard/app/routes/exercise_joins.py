@@ -5,8 +5,10 @@ from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
 from hard.app.processes import RestProcesses, exercise_join_filter
+from hard.aws.dynamodb.handler import get_db_instance
 from hard.aws.interfaces.fastapi import request
 from hard.models.exercise_join import ExerciseJoin
+from hard.models.set import Set
 
 router = APIRouter(prefix="/exercise-joins")
 
@@ -70,9 +72,19 @@ async def delete_exercise_join(
     exercise_join_id: str,
 ) -> ExerciseJoin:
     user = request.get_user_claims(req)
+    db = get_db_instance()
     deleted_exercise_join = RestProcesses.delete(
         ExerciseJoin, user, UUID(exercise_join_id)
     )
+
+    sets = db.batch_get(
+        user,
+        target_object_cls=Set,
+        search_attr="exercise_join_id",
+        matches_list=[exercise_join_id],
+    )
+    for set in sets:
+        RestProcesses.delete(Set, user, set.object_id)
 
     return deleted_exercise_join
 
@@ -80,11 +92,12 @@ async def delete_exercise_join(
 @router.delete("", response_model=ExerciseJoin)
 async def delete_exercise_join_from_ids(
     req: Request,
-    exercise_id: UUID,
-    workout_id: UUID,
+    exercise: UUID,
+    workout: UUID,
 ) -> ExerciseJoin:
+    db = get_db_instance()
     user = request.get_user_claims(req)
-    relevant_joins = exercise_join_filter(user, exercise_id, workout_id)
+    relevant_joins = exercise_join_filter(user, exercise, workout)
     if len(relevant_joins) == 0:
         raise HTTPException(status_code=404, detail="No joins found")
     elif len(relevant_joins) > 1:
@@ -94,4 +107,14 @@ async def delete_exercise_join_from_ids(
         deleted_exercise_join = RestProcesses.delete(
             ExerciseJoin, user, to_delete.object_id
         )
+
+        sets = db.batch_get(
+            user,
+            target_object_cls=Set,
+            search_attr="exercise_join_id",
+            matches_list=[to_delete.object_id],
+        )
+        for set in sets:
+            RestProcesses.delete(Set, user, set.object_id)
+
         return deleted_exercise_join

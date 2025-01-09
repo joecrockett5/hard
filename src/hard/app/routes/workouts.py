@@ -6,7 +6,10 @@ from fastapi import APIRouter
 from starlette.requests import Request
 
 from hard.app.processes import RestProcesses, workout_date_filter
+from hard.aws.dynamodb.handler import get_db_instance
 from hard.aws.interfaces.fastapi import request
+from hard.models.exercise_join import ExerciseJoin
+from hard.models.set import Set
 from hard.models.workout import Workout
 
 router = APIRouter(prefix="/workouts")
@@ -66,6 +69,27 @@ async def delete_workout(
     workout_id: str,
 ) -> Workout:
     user = request.get_user_claims(req)
+    db = get_db_instance()
     deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
+
+    exercise_joins_to_delete = db.batch_get(
+        user,
+        target_object_cls=ExerciseJoin,
+        search_attr="workout_id",
+        matches_list=[workout_id],
+    )
+
+    sets_to_delete = db.batch_get(
+        user,
+        target_object_cls=Set,
+        search_attr="exercise_join_id",
+        matches_list=[join.object_id for join in exercise_joins_to_delete],
+    )
+
+    for join in exercise_joins_to_delete:
+        RestProcesses.delete(ExerciseJoin, user, join.object_id)
+
+    for set in sets_to_delete:
+        RestProcesses.delete(Set, user, set.object_id)
 
     return deleted_workout
