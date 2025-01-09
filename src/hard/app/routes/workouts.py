@@ -70,7 +70,6 @@ async def delete_workout(
 ) -> Workout:
     user = request.get_user_claims(req)
     db = get_db_instance()
-    deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
 
     exercise_joins_to_delete = db.batch_get(
         user,
@@ -91,5 +90,7 @@ async def delete_workout(
 
     for set in sets_to_delete:
         RestProcesses.delete(Set, user, set.object_id)
+
+    deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
 
     return deleted_workout

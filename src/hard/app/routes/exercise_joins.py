@@ -104,9 +104,6 @@ async def delete_exercise_join_from_ids(
         raise HTTPException(status_code=409, detail="Multiple joins found")
     else:
         to_delete = relevant_joins[0]
-        deleted_exercise_join = RestProcesses.delete(
-            ExerciseJoin, user, to_delete.object_id
-        )
 
         sets = db.batch_get(
             user,
@@ -116,5 +113,9 @@ async def delete_exercise_join_from_ids(
         )
         for set in sets:
             RestProcesses.delete(Set, user, set.object_id)
+
+        deleted_exercise_join = RestProcesses.delete(
+            ExerciseJoin, user, to_delete.object_id
+        )
 
         return deleted_exercise_join
