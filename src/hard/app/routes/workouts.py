@@ -83,7 +83,7 @@ async def delete_workout(
         user,
         target_object_cls=Set,
         search_attr="exercise_join_id",
-        matches_list=[join.object_id for join in exercise_joins_to_delete],
+        matches_list=[str(join.object_id) for join in exercise_joins_to_delete],
     )
 
     for join in exercise_joins_to_delete:

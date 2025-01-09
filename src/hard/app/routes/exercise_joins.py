@@ -112,7 +112,7 @@ async def delete_exercise_join_from_ids(
             user,
             target_object_cls=Set,
             search_attr="exercise_join_id",
-            matches_list=[to_delete.object_id],
+            matches_list=[str(to_delete.object_id)],
         )
         for set in sets:
             RestProcesses.delete(Set, user, set.object_id)
