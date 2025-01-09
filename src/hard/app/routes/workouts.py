@@ -78,18 +78,19 @@ async def delete_workout(
         matches_list=[workout_id],
     )
 
-    sets_to_delete = db.batch_get(
-        user,
-        target_object_cls=Set,
-        search_attr="exercise_join_id",
-        matches_list=[str(join.object_id) for join in exercise_joins_to_delete],
-    )
+    if exercise_joins_to_delete:
+        sets_to_delete = db.batch_get(
+            user,
+            target_object_cls=Set,
+            search_attr="exercise_join_id",
+            matches_list=[str(join.object_id) for join in exercise_joins_to_delete],
+        )
 
-    for join in exercise_joins_to_delete:
-        RestProcesses.delete(ExerciseJoin, user, join.object_id)
+        for set in sets_to_delete:
+            RestProcesses.delete(Set, user, set.object_id)
 
-    for set in sets_to_delete:
-        RestProcesses.delete(Set, user, set.object_id)
+        for join in exercise_joins_to_delete:
+            RestProcesses.delete(ExerciseJoin, user, join.object_id)
 
     deleted_workout = RestProcesses.delete(Workout, user, UUID(workout_id))
 
