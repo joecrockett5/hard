@@ -8,6 +8,7 @@ class ObjectType(Enum):
     WORKOUT = "Workout"
     EXERCISE = "Exercise"
     SET = "Set"
+    TEMPLATE = "Template"
 
     # Joins
     TAG_JOIN = "TagJoin"
