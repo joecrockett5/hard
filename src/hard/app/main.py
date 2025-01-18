@@ -2,7 +2,15 @@ from fastapi import APIRouter, FastAPI, HTTPException, status
 from mangum import Mangum
 from starlette.requests import Request
 
-from hard.app.routes import exercise_joins, exercises, sets, tag_joins, tags, workouts
+from hard.app.routes import (
+    exercise_joins,
+    exercises,
+    sets,
+    tag_joins,
+    tags,
+    templates,
+    workouts,
+)
 from hard.aws.dynamodb.consts import (
     InvalidAttributeChangeError,
     ItemAccessUnauthorizedError,
@@ -19,6 +27,7 @@ api.include_router(sets.router)
 api.include_router(tags.router)
 api.include_router(exercise_joins.router)
 api.include_router(tag_joins.router)
+api.include_router(templates.router)
 
 
 @api.get("/user", response_model=User)
